@@ -1,0 +1,25 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Rockview",
+    "sfname": "Rockview - PAGC",
+    "type": "Conservation Area",
+    "color": "rgb(0, 79, 113)",
+    "desc": "Adjacent to the historic Rockview facility, this conservation area encompasses wetlands, grasslands, and early-successional habitat. The site serves as an important corridor connecting natural areas in the Spring Creek watershed.",
+    "tags": [
+      "Wetlands",
+      "Grasslands",
+      "Wildlife Corridor"
+    ],
+    "species": "35+",
+    "status": "Active",
+    "lat": 40.893,
+    "lng": -77.78,
+    "total_acres": 1840.23,
+    "county": "Centre",
+    "township": "Benner",
+    "date": "7/18/12",
+    "access": "OPEN"
+  },
+  "geometry": null
+}

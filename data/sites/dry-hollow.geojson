@@ -1,0 +1,25 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Dry Hollow",
+    "sfname": "Dry Hollow",
+    "type": "Watershed",
+    "color": "rgb(0, 87, 63)",
+    "desc": "A stream and hollow restoration project addressing acid mine drainage and habitat degradation. Dry Hollow supports passive treatment systems that restore water quality and aquatic life in formerly impaired waterways.",
+    "tags": [
+      "AMD Treatment",
+      "Stream Restoration",
+      "Water Quality"
+    ],
+    "species": "18+",
+    "status": "Active",
+    "lat": 40.775,
+    "lng": -77.94,
+    "total_acres": 1254.12,
+    "county": "Huntingdon",
+    "township": "",
+    "date": "2/16/21",
+    "access": "OPEN"
+  },
+  "geometry": null
+}

@@ -1,0 +1,25 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Meyer Dairy",
+    "sfname": "Meyer Dairy",
+    "type": "Agricultural Conservation",
+    "color": "rgb(240, 179, 35)",
+    "desc": "A dairy farm partnering in conservation easement programs to protect productive farmland and water resources. Riparian buffers and rotational grazing practices reduce nutrient runoff into local waterways.",
+    "tags": [
+      "Dairy",
+      "Easement",
+      "Riparian Buffer"
+    ],
+    "species": "10+",
+    "status": "Active",
+    "lat": 40.815,
+    "lng": -77.76,
+    "total_acres": 154.16,
+    "county": "Centre",
+    "township": "College",
+    "date": "9/26/17",
+    "access": "NO"
+  },
+  "geometry": null
+}

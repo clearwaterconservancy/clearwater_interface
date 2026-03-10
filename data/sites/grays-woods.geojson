@@ -1,0 +1,25 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Gray's Woods",
+    "sfname": "Gray's Woods Preserve",
+    "type": "Forest Preserve",
+    "color": "rgb(0, 87, 63)",
+    "desc": "A remnant old-growth forest fragment within the Spring Creek watershed. Gray's Woods harbors mature oak-hickory stands and provides critical urban forest ecosystem services including stormwater management and carbon sequestration.",
+    "tags": [
+      "Old Growth",
+      "Oak-Hickory",
+      "Urban Forest"
+    ],
+    "species": "60+",
+    "status": "Protected",
+    "lat": 40.835,
+    "lng": -77.86,
+    "total_acres": 115.5,
+    "county": "Centre",
+    "township": "Patton",
+    "date": "2/22/22",
+    "access": "OPEN"
+  },
+  "geometry": null
+}

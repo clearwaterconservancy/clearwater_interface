@@ -1,0 +1,25 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Musser Gap",
+    "sfname": "Musser Gap",
+    "type": "Recreation & Conservation",
+    "color": "rgb(0, 61, 76)",
+    "desc": "A popular multi-use trail corridor in the Rothrock State Forest. Musser Gap connects mountain biking, hiking, and equestrian trails while protecting forested slopes and seasonal stream headwaters.",
+    "tags": [
+      "Trails",
+      "Mountain Biking",
+      "Rothrock"
+    ],
+    "species": "30+",
+    "status": "Active",
+    "lat": 40.765,
+    "lng": -77.8,
+    "total_acres": 432.24,
+    "county": "Centre",
+    "township": "Ferguson",
+    "date": "8/22/07",
+    "access": "OPEN"
+  },
+  "geometry": null
+}

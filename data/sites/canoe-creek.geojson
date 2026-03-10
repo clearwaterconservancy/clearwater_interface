@@ -1,0 +1,25 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Canoe Creek Conservation Bank",
+    "sfname": "Canoe Creek Conservation Bank",
+    "type": "Conservation Bank",
+    "color": "rgb(0, 79, 113)",
+    "desc": "A wetland and stream mitigation bank near the Canoe Creek watershed. This site generates conservation credits by restoring and permanently protecting degraded habitats, offsetting impacts from development elsewhere in the region.",
+    "tags": [
+      "Mitigation Bank",
+      "Wetland Restoration",
+      "Credits"
+    ],
+    "species": "25+",
+    "status": "Active",
+    "lat": 40.575,
+    "lng": -78.11,
+    "total_acres": 214.81,
+    "county": "Blair",
+    "township": "",
+    "date": "12/27/19",
+    "access": "NO"
+  },
+  "geometry": null
+}

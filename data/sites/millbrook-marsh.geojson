@@ -1,0 +1,26 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Millbrook Marsh",
+    "sfname": "Millbrook Marsh",
+    "type": "Wetland",
+    "color": "rgb(72, 159, 223)",
+    "desc": "One of Centre County's premier natural areas, Millbrook Marsh is a calcareous fen and wetland complex fed by limestone springs. A boardwalk trail system provides access to this ecologically significant site, home to rare plants and diverse bird species.",
+    "tags": [
+      "Calcareous Fen",
+      "Boardwalk",
+      "Birding",
+      "Rare Plants"
+    ],
+    "species": "200+",
+    "status": "Protected",
+    "lat": 40.843,
+    "lng": -77.82,
+    "total_acres": 52.84,
+    "county": "Centre",
+    "township": "College",
+    "date": "1/1/97",
+    "access": "OPEN"
+  },
+  "geometry": null
+}

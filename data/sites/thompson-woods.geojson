@@ -1,0 +1,25 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Thompson Woods",
+    "sfname": "Thompson Woods Preserve",
+    "type": "Forest Preserve",
+    "color": "rgb(0, 61, 76)",
+    "desc": "A forested tract south of State College featuring mixed hardwoods and seasonal wetland pockets. Thompson Woods provides habitat connectivity and recreational trail opportunities in the growing urban-wildland interface.",
+    "tags": [
+      "Hardwoods",
+      "Trails",
+      "Habitat Connectivity"
+    ],
+    "species": "40+",
+    "status": "Active",
+    "lat": 40.825,
+    "lng": -77.83,
+    "total_acres": 42.38,
+    "county": "Centre",
+    "township": "College",
+    "date": "11/13/00",
+    "access": "OPEN"
+  },
+  "geometry": null
+}

@@ -1,0 +1,26 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Plummers Hollow",
+    "sfname": "Plummers Hollow",
+    "type": "Nature Preserve",
+    "color": "rgb(72, 159, 223)",
+    "desc": "A pristine mountain hollow preserve in the Bald Eagle Ridge. Plummers Hollow is a biodiversity hotspot featuring old-growth hemlock stands, rich fern understories, and documented populations of rare moths and salamanders.",
+    "tags": [
+      "Old Growth",
+      "Biodiversity",
+      "Hemlock",
+      "Salamanders"
+    ],
+    "species": "150+",
+    "status": "Protected",
+    "lat": 40.685,
+    "lng": -78.02,
+    "total_acres": 664.73,
+    "county": "Blair",
+    "township": "",
+    "date": "4/23/19",
+    "access": "NO"
+  },
+  "geometry": null
+}

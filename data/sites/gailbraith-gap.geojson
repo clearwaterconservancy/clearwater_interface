@@ -1,0 +1,25 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Gailbraith Gap",
+    "sfname": "Gailbraith Gap",
+    "type": "Forest Preserve",
+    "color": "rgb(0, 79, 113)",
+    "desc": "A mountain gap property protecting contiguous forest along Tussey Mountain. The site safeguards headwater streams, provides critical flyover habitat for migratory raptors, and maintains the integrity of the Ridge and Valley landscape.",
+    "tags": [
+      "Mountain",
+      "Raptors",
+      "Headwater Streams"
+    ],
+    "species": "48+",
+    "status": "Protected",
+    "lat": 40.805,
+    "lng": -77.68,
+    "total_acres": 152.67,
+    "county": "Centre",
+    "township": "Harris",
+    "date": "11/4/11",
+    "access": "OPEN"
+  },
+  "geometry": null
+}

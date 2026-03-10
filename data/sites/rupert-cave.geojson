@@ -1,0 +1,26 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Rupert Cave",
+    "sfname": "Rupert Cave",
+    "type": "Cave & Karst",
+    "color": "rgb(91, 167, 94)",
+    "desc": "A significant karst feature in Huntingdon County supporting bat hibernacula and unique subterranean ecosystems. Conservation efforts focus on protecting cave-dwelling species and maintaining hydrological connectivity in the limestone landscape.",
+    "tags": [
+      "Bat Habitat",
+      "Karst",
+      "Subterranean",
+      "Hibernaculum"
+    ],
+    "species": "15+",
+    "status": "Protected",
+    "lat": 40.58,
+    "lng": -77.73,
+    "total_acres": 46.78,
+    "county": "Mifflin",
+    "township": "",
+    "date": "9/17/12",
+    "access": "NO"
+  },
+  "geometry": null
+}

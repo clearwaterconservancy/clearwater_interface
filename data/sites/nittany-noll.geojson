@@ -1,0 +1,25 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Nittany Noll",
+    "sfname": "Nittany-Noll Preserve",
+    "type": "Nature Preserve",
+    "color": "rgb(72, 159, 223)",
+    "desc": "A scenic hilltop preserve overlooking Nittany Valley. Features mixed hardwood forests, wildflower meadows, and panoramic views of Mount Nittany and the surrounding ridgelines.",
+    "tags": [
+      "Viewpoint",
+      "Hardwood Forest",
+      "Wildflowers"
+    ],
+    "species": "28+",
+    "status": "Protected",
+    "lat": 40.895,
+    "lng": -77.66,
+    "total_acres": 459.52,
+    "county": "Centre",
+    "township": "Spring",
+    "date": "12/13/17",
+    "access": "NO"
+  },
+  "geometry": null
+}

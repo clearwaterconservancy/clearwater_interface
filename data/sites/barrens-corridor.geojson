@@ -1,0 +1,26 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Barrens to Bald Eagle Corridor",
+    "sfname": "Barrens to Bald Eagle Corridor",
+    "type": "Wildlife Corridor",
+    "color": "rgb(0, 61, 76)",
+    "desc": "A critical landscape-scale corridor connecting the Scotia Barrens to the Bald Eagle Ridge. This project protects migration routes for black bears, bobcats, and forest interior songbirds across fragmented habitat.",
+    "tags": [
+      "Migration",
+      "Landscape Connectivity",
+      "Bears",
+      "Bobcat"
+    ],
+    "species": "55+",
+    "status": "In Progress",
+    "lat": 40.845,
+    "lng": -77.92,
+    "total_acres": 37.98,
+    "county": "Centre",
+    "township": "Halfmoon",
+    "date": "4/29/10",
+    "access": "OPEN"
+  },
+  "geometry": null
+}

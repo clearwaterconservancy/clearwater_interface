@@ -103,7 +103,7 @@
     position: absolute;
     left: 0;
     bottom: 0;
-    height: 95%;
+    height: 94%;
     width: 460px;
     background: var(--bg-panel);
     border-right: 1px solid var(--border);
@@ -115,6 +115,63 @@
 
   .sidebar.collapsed {
     transform: translateX(-100%);
+  }
+
+  /* ── PANEL VIEWPORT & SLIDING VIEWS ── */
+  .panel-viewport {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-views {
+    display: flex;
+    flex-direction: row;
+    width: 200%;
+    height: 100%;
+    transform: translateX(0);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .panel-views.show-detail {
+    transform: translateX(-50%);
+  }
+
+  .panel-catalog,
+  .panel-detail {
+    width: 50%;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .detail-back-bar {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .detail-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-family: var(--fonthg);
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .detail-back-btn:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
   }
 
   .sidebar-header {
@@ -297,47 +354,6 @@
   }
 
   /* ── DETAIL PANEL ── */
-  .detail-panel {
-    position: absolute;
-    top: 0; right: 0;
-    width: 380px;
-    height: 100%;
-    background: var(--bg-panel-trans);
-    border-left: 1px solid var(--border);
-    z-index: 800;
-    display: flex;
-    flex-direction: column;
-    transform: translateX(100%);
-    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
-    box-shadow: -8px 0 32px rgba(0,0,0,0.3);
-  }
-
-  .detail-panel.open {
-    transform: translateX(0);
-  }
-
-  .detail-close {
-    position: absolute;
-    top: 16px; right: 16px;
-    width: 36px; height: 36px;
-    border: 1px solid var(--border);
-    background: var(--bg-card);
-    color: var(--text-secondary);
-    border-radius: 50%;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    transition: all 0.2s;
-    z-index: 10;
-  }
-
-  .detail-close:hover {
-    border-color: var(--accent);
-    color: var(--accent);
-  }
-
   .detail-hero {
     height: 200px;
     position: relative;
@@ -605,7 +621,7 @@
     top: 50%;
     transform: translateY(-50%);
     width: 26px;
-    height: 88px;
+    height: 85px;
     background: var(--bg-panel);
     border: 1px solid var(--border-strong);
     border-left: none;
@@ -641,7 +657,7 @@
 <!-- NAV -->
 <div class="top-bar">
   <div class="logo">
-    <img src = 'logos/HarryYu_cwc_logo_long_reverse.svg' alt = "Clearwater Conservancy" height = "150">
+    <img src = 'logos/HarryYu_cwc_logo_long_reverse.svg' alt = "Clearwater Conservancy" height = "40">
   </div>
   <div class="nav-links">
     <button class="nav-link active" onclick="showView('map')">Map</button>
@@ -652,63 +668,149 @@
 <!-- APP -->
 <div class="app">
   <!-- SIDEBAR -->
-  <div class="sidebar collapsed" id="sidebar">
+  <div class="sidebar" id="sidebar">
     <button class="sidebar-tab" onclick="toggleSidebar()" title="Toggle site list">
       <svg class="tab-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"/>
       </svg>
     </button>
-    <div class="sidebar-header">
-      <h1>Clearwater Conservancy</h1>
-      <div class="subtitle">Central Pennsylvania Region</div>
-      <div class="stat-row">
-        <div class="stat">
-          <div class="stat-value">18</div>
-          <div class="stat-label">Sites</div>
+
+    <div class="panel-viewport">
+      <div class="panel-views" id="panelViews">
+
+        <!-- CATALOG VIEW -->
+        <div class="panel-catalog">
+          <div class="sidebar-header">
+            <h1>Clearwater Conservancy</h1>
+            <div class="subtitle">Central Pennsylvania Region</div>
+            <div class="stat-row">
+              <div class="stat">
+                <div class="stat-value">18</div>
+                <div class="stat-label">Sites</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">5</div>
+                <div class="stat-label">Categories</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value">6</div>
+                <div class="stat-label">Counties</div>
+              </div>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" class="search-input" placeholder="Search sites..." id="searchInput" oninput="filterSites()">
+          </div>
+          <div class="filter-row" id="filterRow">
+            <button class="filter-pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
+          </div>
+          <div class="site-list" id="siteList"></div>
         </div>
-        <div class="stat">
-          <div class="stat-value">5</div>
-          <div class="stat-label">Categories</div>
+
+        <!-- DETAIL VIEW -->
+        <div class="panel-detail">
+          <div class="detail-back-bar">
+            <button class="detail-back-btn" id="detailBackBtn" type="button">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+              Back to Sites
+            </button>
+          </div>
+          <div class="detail-hero" id="detailHero">
+            <div class="detail-hero-bg" id="detailHeroBg"></div>
+            <div class="detail-hero-overlay"></div>
+            <div class="detail-hero-content">
+              <div class="detail-type-badge" id="detailBadge"></div>
+              <div class="detail-title" id="detailTitle"></div>
+            </div>
+          </div>
+          <div class="detail-body" id="detailBody"></div>
         </div>
-        <div class="stat">
-          <div class="stat-value">6</div>
-          <div class="stat-label">Counties</div>
-        </div>
+
       </div>
     </div>
-
-    <div class="search-bar">
-      <input type="text" class="search-input" placeholder="Search sites..." id="searchInput" oninput="filterSites()">
-    </div>
-
-    <div class="filter-row" id="filterRow">
-      <button class="filter-pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
-    </div>
-
-    <div class="site-list" id="siteList"></div>
   </div>
 
   <!-- MAP -->
   <div class="map-container">
     <div id="map"></div>
-    <!-- DETAIL PANEL -->
-    <div class="detail-panel" id="detailPanel">
-      <button class="detail-close" onclick="closeDetail()">&times;</button>
-      <div class="detail-hero" id="detailHero">
-        <div class="detail-hero-bg" id="detailHeroBg"></div>
-        <div class="detail-hero-overlay"></div>
-        <div class="detail-hero-content">
-          <div class="detail-type-badge" id="detailBadge"></div>
-          <div class="detail-title" id="detailTitle"></div>
-        </div>
-      </div>
-      <div class="detail-body" id="detailBody"></div>
-    </div>
   </div>
 </div>
 
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.js"></script>
 <script>
+// ── CONTENT FILE REGISTRY ──
+const CONTENT_FILES = [
+  ['buck-run',          'Buck Run'],
+  ['nittany-noll',      'Nittany-Noll Preserve'],
+  ['rockview',          'Rockview - PAGC'],
+  ['buffalo-run-farm',  'Buffalo Run Farm'],
+  ['millbrook-marsh',   'Millbrook Marsh'],
+  ['grays-woods',       "Gray's Woods Preserve"],
+  ['thompson-woods',    'Thompson Woods Preserve'],
+  ['barrens-corridor',  'Barrens to Bald Eagle Corridor'],
+  ['rhoneymeade',       'Rhoneymeade'],
+  ['meyer-dairy',       'Meyer Dairy'],
+  ['gailbraith-gap',    'Gailbraith Gap'],
+  ['dry-hollow',        'Dry Hollow'],
+  ['musser-gap',        'Musser Gap'],
+  ['plummers-hollow',   'Plummers Hollow'],
+  ['canoe-creek',       'Canoe Creek Conservation Bank'],
+  ['rupert-cave',       'Rupert Cave'],
+];
+
+// Shapefile entries that map to a canonical content entry
+const CONTENT_ALIAS = {
+  'Rockview - PFBC':       'Rockview - PAGC',
+  'Rockview - PSU':        'Rockview - PAGC',
+  'Rockview - Benner Twp': 'Rockview - PAGC',
+  'Millbrook Marsh - Fen': 'Millbrook Marsh',
+};
+
+// Color map for immediate polygon rendering (before content loads)
+const SITE_COLORS = {
+  'Buck Run':                       'rgb(72, 159, 223)',
+  'Nittany-Noll Preserve':          'rgb(72, 159, 223)',
+  'Rockview - PAGC':                'rgb(0, 79, 113)',
+  'Rockview - PFBC':                'rgb(0, 79, 113)',
+  'Rockview - PSU':                 'rgb(0, 79, 113)',
+  'Rockview - Benner Twp':          'rgb(0, 79, 113)',
+  'Buffalo Run Farm':               'rgb(0, 87, 63)',
+  'Millbrook Marsh':                'rgb(72, 159, 223)',
+  'Millbrook Marsh - Fen':          'rgb(72, 159, 223)',
+  "Gray's Woods Preserve":          'rgb(0, 87, 63)',
+  'Thompson Woods Preserve':        'rgb(0, 61, 76)',
+  'Barrens to Bald Eagle Corridor': 'rgb(0, 61, 76)',
+  'Rhoneymeade':                    'rgb(72, 159, 223)',
+  'Meyer Dairy':                    'rgb(240, 179, 35)',
+  'Gailbraith Gap':                 'rgb(0, 79, 113)',
+  'Dry Hollow':                     'rgb(0, 87, 63)',
+  'Musser Gap':                     'rgb(0, 61, 76)',
+  'Plummers Hollow':                'rgb(72, 159, 223)',
+  'Canoe Creek Conservation Bank':  'rgb(0, 79, 113)',
+  'Rupert Cave':                    'rgb(91, 167, 94)',
+};
+
+// Loaded site content keyed by sfname
+const siteContent = {};
+
+function resolveContent(sfname) {
+  const canonical = CONTENT_ALIAS[sfname] || sfname;
+  return siteContent[canonical] || null;
+}
+
+// ── LOAD CONTENT FILES ──
+const contentLoadPromise = Promise.all(
+  CONTENT_FILES.map(([slug, sfname]) =>
+    fetch(`data/sites/${slug}.geojson`)
+      .then(r => r.json())
+      .then(gj => { siteContent[sfname] = gj.properties; })
+      .catch(err => console.warn(`Failed to load ${slug}.geojson:`, err))
+  )
+);
+
+// Placeholder so renderList works before content loads (shows nothing)
 const SITES = [
   {
     name: "Buck Run",
@@ -874,26 +976,15 @@ const SITES = [
   }
 ];
 
-// ── SUB-POINT DATA ──
-const SUB_POINT_TEMPLATES = [
-  { label: 'Stream Gauge Station', dlat:  0.008, dlng:  0.012 },
-  { label: 'Wildlife Camera',      dlat: -0.007, dlng:  0.009 },
-  { label: 'Survey Plot',          dlat:  0.004, dlng: -0.010 },
-];
-
-const SUB_POINTS = [];
-SITES.forEach((site, si) => {
-  const jitter = (si % 5) * 0.0005;
-  SUB_POINT_TEMPLATES.forEach((tpl, ti) => {
-    SUB_POINTS.push({
-      parentName: site.name,
-      name: tpl.label,
-      lat: site.lat + tpl.dlat + jitter * (ti % 2 === 0 ? 1 : -1),
-      lng: site.lng + tpl.dlng + jitter * (ti % 2 === 0 ? -1 : 1),
-      color: site.color,
-    });
-  });
-});
+// ── BUILD COLOR EXPRESSION FOR MAPBOX ──
+function buildColorExpr() {
+  const expr = ['match', ['get', 'cleaned_na']];
+  for (const [name, color] of Object.entries(SITE_COLORS)) {
+    expr.push(name, color);
+  }
+  expr.push('#607d8b');
+  return expr;
+}
 
 // ── MAP SETUP ──
 mapboxgl.accessToken = 'pk.eyJ1IjoiZGVhbHRoeSIsImEiOiJjbWx4amZyaDUwc3NpM2Zwb2N4bTRoNG04In0.pK9O---Bq9-ZJtG4wAHhwA';
@@ -901,141 +992,113 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGVhbHRoeSIsImEiOiJjbWx4amZyaDUwc3NpM2Zwb2N4b
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/dealthy/cmmcaawvh00aa01qn4yc04lin',
-  center: [-77.82, 40.82],
-  zoom: 10,
+  center: [-78.002306, 40.758736],
+  zoom: 9,
   pitch: 60
 });
 
 map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
 
-// ── MARKERS (GeoJSON layer) ──
-map.on('load', () => {
-  map.addSource('sites', {
+// ── MAP + CONTENT LOAD ──
+const mapLoadPromise = new Promise(resolve => map.on('load', resolve));
+
+Promise.all([mapLoadPromise, contentLoadPromise]).then(() => {
+  const colorExpr = buildColorExpr();
+
+  map.addSource('properties', {
     type: 'geojson',
-    data: {
-      type: 'FeatureCollection',
-      features: SITES.map(site => ({
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: [site.lng, site.lat] },
-        properties: { name: site.name, color: site.color }
-      }))
-    }
+    data: 'data/properties.geojson',
+    generateId: true
   });
 
+  // Fill
   map.addLayer({
-    id: 'sites-layer',
-    type: 'circle',
-    source: 'sites',
-    paint: {
-      'circle-radius': 7,
-      'circle-color': ['get', 'color'],
-      'circle-stroke-width': 2,
-      'circle-stroke-color': 'rgba(255,255,255,0.4)'
-    }
+    id: 'properties-fill',
+    type: 'fill',
+    source: 'properties',
+    paint: { 'fill-color': colorExpr, 'fill-opacity': 0.45 }
   });
 
-  map.addSource('sub-sites', {
-    type: 'geojson',
-    data: {
-      type: 'FeatureCollection',
-      features: SUB_POINTS.map(p => ({
-        type: 'Feature',
-        geometry: { type: 'Point', coordinates: [p.lng, p.lat] },
-        properties: { parentName: p.parentName, name: p.name, color: p.color }
-      }))
-    }
-  });
-
+  // Hover highlight
   map.addLayer({
-    id: 'sub-sites-layer',
-    type: 'circle',
-    source: 'sub-sites',
-    filter: ['==', 'parentName', ''],
+    id: 'properties-hover',
+    type: 'fill',
+    source: 'properties',
     paint: {
-      'circle-radius': 5,
-      'circle-color': ['get', 'color'],
-      'circle-stroke-width': 1.5,
-      'circle-stroke-color': 'rgba(255,255,255,0.6)',
-      'circle-opacity': 0.85
+      'fill-color': '#ffffff',
+      'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.2, 0]
     }
   });
 
+  // Selected highlight
   map.addLayer({
-    id: 'sites-selected',
-    type: 'circle',
-    source: 'sites',
-    filter: ['==', 'name', ''],
+    id: 'properties-selected',
+    type: 'fill',
+    source: 'properties',
     paint: {
-      'circle-radius': 11,
-      'circle-color': ['get', 'color'],
-      'circle-stroke-width': 3,
-      'circle-stroke-color': 'rgba(255,255,255,0.9)'
+      'fill-color': '#ffffff',
+      'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.15, 0]
     }
   });
 
-  SITES.forEach(site => {
-    const el = document.createElement('div');
-    el.className = 'site-label';
-    el.textContent = site.name;
-    el.addEventListener('click', e => {
-      e.stopPropagation();
-      openDetail(site);
-      map.flyTo({ center: [site.lng, site.lat], zoom: 13, duration: 800, offset: [-100, 0] });
-    });
-    new mapboxgl.Marker({ element: el, anchor: 'bottom', offset: [0, -14] })
-      .setLngLat([site.lng, site.lat])
-      .addTo(map);
+  // Outline
+  map.addLayer({
+    id: 'properties-outline',
+    type: 'line',
+    source: 'properties',
+    paint: {
+      'line-color': colorExpr,
+      'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 2.5, 1.2],
+      'line-opacity': 0.9
+    }
   });
 
-  SUB_POINTS.forEach(p => {
-    const el = document.createElement('div');
-    el.className = 'sub-label';
-    el.textContent = p.name;
-    el.style.display = 'none';
-    new mapboxgl.Marker({ element: el, anchor: 'bottom', offset: [0, -8] })
-      .setLngLat([p.lng, p.lat])
-      .addTo(map);
-    subMarkers.push({ parentName: p.parentName, el });
-  });
+  // Hover state
+  let hoveredId = null;
+  let selectedIds = [];
 
-  const tooltip = new mapboxgl.Popup({
-    closeButton: false,
-    closeOnClick: false,
-    offset: [0, -14],
-    className: 'map-tooltip'
-  });
-
-  map.on('mousemove', 'sites-layer', e => {
+  map.on('mousemove', 'properties-fill', e => {
+    if (e.features.length > 0) {
+      if (hoveredId !== null) map.setFeatureState({ source: 'properties', id: hoveredId }, { hover: false });
+      hoveredId = e.features[0].id;
+      map.setFeatureState({ source: 'properties', id: hoveredId }, { hover: true });
+    }
     map.getCanvas().style.cursor = 'pointer';
-    tooltip.setLngLat(e.lngLat).setText(e.features[0].properties.name).addTo(map);
+    const name = e.features[0].properties.cleaned_na;
+    if (name) tooltip.setLngLat(e.lngLat).setText(name).addTo(map);
   });
 
-  map.on('mouseleave', 'sites-layer', () => {
+  map.on('mouseleave', 'properties-fill', () => {
+    if (hoveredId !== null) map.setFeatureState({ source: 'properties', id: hoveredId }, { hover: false });
+    hoveredId = null;
     map.getCanvas().style.cursor = '';
     tooltip.remove();
   });
 
-  map.on('click', 'sites-layer', e => {
-    const site = SITES.find(s => s.name === e.features[0].properties.name);
-    if (site) {
-      openDetail(site);
-      map.flyTo({ center: [site.lng, site.lat], zoom: 13, duration: 800, offset: [-100, 0] });
-    }
+  map.on('click', 'properties-fill', e => {
+    const sfname = e.features[0].properties.cleaned_na;
+    if (!sfname) return;
+    const content = resolveContent(sfname);
+    if (!content) return;
+
+    // Clear previous selection
+    selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: false }));
+    selectedIds = [e.features[0].id];
+    map.setFeatureState({ source: 'properties', id: e.features[0].id }, { selected: true });
+
+    openDetail(content);
+    map.flyTo({ center: e.lngLat, zoom: 13, duration: 800, offset: [200, 0] });
   });
+
+  renderList();
 });
 
-// ── CATEGORIES ──
-const types = [...new Set(SITES.map(s => s.type))];
-const filterRow = document.getElementById('filterRow');
-types.forEach(type => {
-  const pill = document.createElement('button');
-  pill.className = 'filter-pill';
-  pill.textContent = type;
-  pill.dataset.filter = type;
-  pill.onclick = function() { setFilter(type, this); };
-  filterRow.appendChild(pill);
+const tooltip = new mapboxgl.Popup({
+  closeButton: false, closeOnClick: false,
+  offset: [0, -8], className: 'map-tooltip'
 });
 
+// ── CATEGORIES & LIST ──
 let activeFilter = 'all';
 
 function setFilter(filter, el) {
@@ -1045,38 +1108,49 @@ function setFilter(filter, el) {
   renderList();
 }
 
-// ── RENDER LIST ──
 function renderList() {
   const query = document.getElementById('searchInput').value.toLowerCase();
   const list = document.getElementById('siteList');
+  const filterRow = document.getElementById('filterRow');
   list.innerHTML = '';
 
-  const filtered = SITES.filter(s => {
-    const matchFilter = activeFilter === 'all' || s.type === activeFilter;
-    const matchSearch = s.name.toLowerCase().includes(query) || s.type.toLowerCase().includes(query) || s.tags.some(t => t.toLowerCase().includes(query));
-    return matchFilter && matchSearch;
+  const sites = Object.values(siteContent);
+
+  // Rebuild type filter pills
+  const types = [...new Set(sites.map(s => s.type))].sort();
+  [...filterRow.querySelectorAll('[data-filter]:not([data-filter="all"])')].forEach(p => p.remove());
+  types.forEach(type => {
+    const pill = document.createElement('button');
+    pill.className = 'filter-pill';
+    pill.textContent = type;
+    pill.dataset.filter = type;
+    pill.onclick = function() { setFilter(type, this); };
+    filterRow.appendChild(pill);
   });
+
+  const filtered = sites
+    .filter(s => {
+      const matchFilter = activeFilter === 'all' || s.type === activeFilter;
+      const matchSearch = !query || s.name.toLowerCase().includes(query) || s.type.toLowerCase().includes(query) || s.tags.some(t => t.toLowerCase().includes(query));
+      return matchFilter && matchSearch;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
 
   filtered.forEach((site, i) => {
     const card = document.createElement('div');
-    card.className = 'site-card';
+    card.className = 'site-card' + (activeSiteName === site.sfname ? ' active' : '');
     card.style.animationDelay = `${i * 0.04}s`;
+    card.id = `card-${site.sfname.replace(/[\s']/g, '-')}`;
     card.onclick = () => {
       openDetail(site);
-      map.flyTo({ center: [site.lng, site.lat], zoom: 13, duration: 800, offset: [-100, 0] });
+      map.flyTo({ center: [site.lng, site.lat], zoom: 13, duration: 800, offset: [200, 0] });
     };
-    card.id = `card-${site.name.replace(/\s+/g, '-')}`;
-
-    const latDir = site.lat >= 0 ? 'N' : 'S';
-    const lngDir = site.lng >= 0 ? 'E' : 'W';
-
     card.innerHTML = `
       <div class="site-dot" style="background:${site.color};color:${site.color}"></div>
       <div class="site-card-body">
         <div class="site-card-type">${site.type}</div>
         <div class="site-card-name">${site.name}</div>
         <div class="site-card-desc">${site.desc}</div>
-        <div class="site-card-coords">${Math.abs(site.lat).toFixed(4)}° ${latDir} · ${Math.abs(site.lng).toFixed(4)}° ${lngDir}</div>
       </div>
     `;
     list.appendChild(card);
@@ -1087,10 +1161,8 @@ function filterSites() { renderList(); }
 
 // ── DETAIL PANEL ──
 let activeSiteName = null;
-let subMarkers = [];
 
 function openDetail(site) {
-  const panel = document.getElementById('detailPanel');
   const badge = document.getElementById('detailBadge');
   const title = document.getElementById('detailTitle');
   const body = document.getElementById('detailBody');
@@ -1098,43 +1170,25 @@ function openDetail(site) {
 
   // Highlight card
   document.querySelectorAll('.site-card').forEach(c => c.classList.remove('active'));
-  const cardEl = document.getElementById(`card-${site.name.replace(/\s+/g, '-')}`);
-  if (cardEl) {
-    cardEl.classList.add('active');
-    cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-  }
+  const cardEl = document.getElementById(`card-${site.sfname.replace(/[\s']/g, '-')}`);
+  if (cardEl) { cardEl.classList.add('active'); cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 
-  // Highlight selected marker
-  if (map.getLayer('sites-selected')) {
-    map.setFilter('sites-selected', ['==', 'name', site.name]);
-  }
+  activeSiteName = site.sfname;
 
-  activeSiteName = site.name;
-
-  // Show sub-points for this site
-  if (map.getLayer('sub-sites-layer')) {
-    map.setFilter('sub-sites-layer', ['==', 'parentName', site.name]);
-  }
-  subMarkers.forEach(m => {
-    m.el.style.display = m.parentName === site.name ? '' : 'none';
-  });
-
-  // Hero gradient
+  // Hero
   heroBg.style.background = `radial-gradient(ellipse at 30% 50%, ${site.color}44, transparent 70%), radial-gradient(ellipse at 70% 80%, ${site.color}22, transparent 60%)`;
-
   badge.textContent = site.type;
   badge.style.background = site.color + '22';
   badge.style.color = site.color;
   badge.style.border = `1px solid ${site.color}44`;
   title.textContent = site.name;
 
-  const latDir = site.lat >= 0 ? 'N' : 'S';
-  const lngDir = site.lng >= 0 ? 'E' : 'W';
+  const township = site.township ? `, ${site.township} Twp` : '';
 
   body.innerHTML = `
     <div class="detail-coords">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      ${Math.abs(site.lat).toFixed(4)}° ${latDir}, ${Math.abs(site.lng).toFixed(4)}° ${lngDir}
+      ${site.county} County${township}
     </div>
 
     <div class="detail-section">
@@ -1146,20 +1200,20 @@ function openDetail(site) {
       <div class="detail-section-title">Key Facts</div>
       <div class="detail-facts">
         <div class="detail-fact">
-          <div class="detail-fact-value">${site.facts.area}</div>
+          <div class="detail-fact-value">${site.total_acres} ac</div>
           <div class="detail-fact-label">Area</div>
         </div>
         <div class="detail-fact">
-          <div class="detail-fact-value">${site.facts.established}</div>
-          <div class="detail-fact-label">Established</div>
+          <div class="detail-fact-value">${site.date}</div>
+          <div class="detail-fact-label">Acquired</div>
         </div>
         <div class="detail-fact">
-          <div class="detail-fact-value">${site.facts.species}</div>
+          <div class="detail-fact-value">${site.species}</div>
           <div class="detail-fact-label">Species Documented</div>
         </div>
         <div class="detail-fact">
-          <div class="detail-fact-value">${site.facts.status}</div>
-          <div class="detail-fact-label">Status</div>
+          <div class="detail-fact-value">${site.access}</div>
+          <div class="detail-fact-label">Public Access</div>
         </div>
       </div>
     </div>
@@ -1172,25 +1226,14 @@ function openDetail(site) {
     </div>
   `;
 
-  panel.classList.add('open');
+  document.getElementById('sidebar').classList.remove('collapsed');
+  document.getElementById('panelViews').classList.add('show-detail');
 }
 
 function closeDetail() {
-  document.getElementById('detailPanel').classList.remove('open');
+  document.getElementById('panelViews').classList.remove('show-detail');
   document.querySelectorAll('.site-card').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.custom-marker').forEach(m => {
-    m.classList.remove('active-marker', 'marker-pulse');
-  });
   activeSiteName = null;
-
-  // Hide sub-points
-  if (map.getLayer('sub-sites-layer')) {
-    map.setFilter('sub-sites-layer', ['==', 'parentName', '']);
-  }
-  if (map.getLayer('sites-selected')) {
-    map.setFilter('sites-selected', ['==', 'name', '']);
-  }
-  subMarkers.forEach(m => { m.el.style.display = 'none'; });
 }
 
 function toggleSidebar() {
@@ -1202,8 +1245,9 @@ function showView(view) {
   event.target.classList.add('active');
 }
 
-// Init
-renderList();
+// Init — sidebar list renders once content files are loaded
+contentLoadPromise.then(() => renderList());
+document.getElementById('detailBackBtn').addEventListener('click', closeDetail);
 </script>
 </body>
 </html>

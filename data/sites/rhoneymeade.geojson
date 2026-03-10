@@ -1,0 +1,26 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Rhoneymeade",
+    "sfname": "Rhoneymeade",
+    "type": "Nature Preserve",
+    "color": "rgb(72, 159, 223)",
+    "desc": "A former arboretum and estate now managed as a public nature preserve. Rhoneymeade features curated tree collections, naturalized meadows, and limestone spring habitats along the Penns Valley corridor.",
+    "tags": [
+      "Arboretum",
+      "Meadows",
+      "Springs",
+      "Public Access"
+    ],
+    "species": "90+",
+    "status": "Protected",
+    "lat": 40.855,
+    "lng": -77.64,
+    "total_acres": 148.8,
+    "county": "Centre",
+    "township": "Potter",
+    "date": "10/30/86",
+    "access": "NO"
+  },
+  "geometry": null
+}

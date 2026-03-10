@@ -1,0 +1,25 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Buck Run",
+    "sfname": "Buck Run",
+    "type": "Watershed",
+    "color": "rgb(72, 159, 223)",
+    "desc": "A headwater stream restoration area in northern Centre County. Buck Run flows through reclaimed forest land, supporting native brook trout populations and riparian habitat recovery.",
+    "tags": [
+      "Stream Restoration",
+      "Brook Trout",
+      "Riparian"
+    ],
+    "species": "12+",
+    "status": "Active",
+    "lat": 41.02,
+    "lng": -78.01,
+    "total_acres": 61.9,
+    "county": "Clearfield",
+    "township": "",
+    "date": "1/27/11",
+    "access": "NO"
+  },
+  "geometry": null
+}

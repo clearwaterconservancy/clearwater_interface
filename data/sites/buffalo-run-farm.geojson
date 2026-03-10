@@ -1,0 +1,25 @@
+{
+  "type": "Feature",
+  "properties": {
+    "name": "Buffalo Run Farm",
+    "sfname": "Buffalo Run Farm",
+    "type": "Agricultural Conservation",
+    "color": "rgb(0, 87, 63)",
+    "desc": "A working farm implementing best management practices for water quality. Streambank fencing, cover crops, and nutrient management plans protect Buffalo Run, a key tributary of Spring Creek.",
+    "tags": [
+      "Agriculture",
+      "Water Quality",
+      "Best Practices"
+    ],
+    "species": "8+",
+    "status": "Active",
+    "lat": 40.875,
+    "lng": -77.84,
+    "total_acres": 198.11,
+    "county": "Centre",
+    "township": "Patton",
+    "date": "12/28/07",
+    "access": "NO"
+  },
+  "geometry": null
+}
