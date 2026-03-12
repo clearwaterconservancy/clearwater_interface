@@ -16,3 +16,6 @@ todos:
 13. how labels look
 14. colors for all polygons
 15. new map style that makes loading faster
+16. multiple map styles to symbolize og/mixed/vector styles
+17. sidebar's width dynamically adjust
+18. default be dynamically adjusted as a "zoom to layer"
