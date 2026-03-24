@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Clearwater Conservancy</title>
-<link href="https://api.mapbox.com/mapbox-gl-js/v3.8.0/mapbox-gl.css" rel="stylesheet" />
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.css" rel="stylesheet" />
 <link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
 <style>
   :root {
@@ -782,12 +782,45 @@ const contentLoadPromise = fetch('data/sites.json')
   .then(data => {
     CONTENT_ALIAS = data.aliases || {};
     labeledSfnames = data.labeled || [];
-    data.sites.forEach(s => { siteContent[s.sfname] = s; });
+    data.sites.forEach(s => {
+      s._key = s.sfname || s.name;
+      siteContent[s._key] = s;
+    });
   })
   .catch(err => console.warn('Failed to load sites.json:', err));
 
 
 const SUN_COLOR = 'rgb(240, 179, 35)';
+
+function siteColor(site) {
+  const id = (site.id || '').split('_')[0];
+  if (id.startsWith('CE') || id.startsWith('Acc')) return 'rgb(72, 159, 223)';  // azure  – easements
+  if (id.startsWith('Fee')) return 'rgb(239, 237, 234)';                          // sand   – owned
+  if (id.startsWith('Fac')) return 'rgb(240, 179, 35)';                          // sun    – facilitated
+  return SUN_COLOR;
+}
+
+// Builds a Mapbox GL 'match' expression mapping cleaned_na → site color
+function buildColorExpression() {
+  const entries = [];
+  const seen = new Set();
+  propertiesGeojson.features.forEach(f => {
+    const name = f.properties.cleaned_na;
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    const site = resolveContent(name);
+    entries.push(name, site ? siteColor(site) : SUN_COLOR);
+  });
+  return entries.length ? ['match', ['get', 'cleaned_na'], ...entries, SUN_COLOR] : SUN_COLOR;
+}
+
+function siteCategory(site) {
+  const id = (site.id || '').split('_')[0];
+  if (id.startsWith('CE') || id.startsWith('Acc')) return 'Easement';
+  if (id.startsWith('Fee')) return 'Owned';
+  if (id.startsWith('Fac')) return 'Facilitated';
+  return 'Other';
+}
 
 function featureCentroid(geometry) {
   const rings = geometry.type === 'Polygon'
@@ -799,7 +832,7 @@ function featureCentroid(geometry) {
 }
 
 // ── MAP SETUP ──
-mapboxgl.accessToken = 'pk.eyJ1IjoiZGVhbHRoeSIsImEiOiJjbW1tcGs4bmEwaXY5MnJxMTJ1NXg5cmpoIn0._7UqnGaCag8KCZkxg8dsTA';
+mapboxgl.accessToken = 'pk.eyJ1IjoiZGVhbHRoeSIsImEiOiJjbWx4amZyaDUwc3NpM2Zwb2N4bTRoNG04In0.pK9O---Bq9-ZJtG4wAHhwA';
 
 const map = new mapboxgl.Map({
   container: 'map',
@@ -839,11 +872,12 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
   });
 
   // Fill
+  const colorExpr = buildColorExpression();
   map.addLayer({
     id: 'properties-fill',
     type: 'fill',
     source: 'properties',
-    paint: { 'fill-color': SUN_COLOR, 'fill-opacity': 0.45 }
+    paint: { 'fill-color': colorExpr, 'fill-opacity': 0.45 }
   });
 
   // Hover highlight
@@ -874,7 +908,7 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
     type: 'line',
     source: 'properties',
     paint: {
-      'line-color': SUN_COLOR,
+      'line-color': colorExpr,
       'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 2.5, 1.2],
       'line-opacity': 0.9
     }
@@ -906,22 +940,18 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
     const p = e.features[0].properties;
     const sfname = p.cleaned_na || p.CWC_NAME || null;
     const editorial = sfname ? resolveContent(sfname) : null;
-    const displayName = editorial?.name || sfname || 'CWC Property';
-    const content = {
-      name: displayName,
-      sfname: sfname || displayName,
-      type: editorial?.type || 'N/A',
-      color: editorial?.color || SUN_COLOR,
-      desc: editorial?.desc || 'No additional information available for this property.',
-      tags: editorial?.tags || [],
-      species: editorial?.species || 'N/A',
-      status: editorial?.status || 'N/A',
-      // Always from shapefile:
-      total_acres: p.clean_acre || 'N/A',
+    // Use editorial site object directly if found; otherwise build a fallback from shapefile props
+    const site = editorial || {
+      _key: sfname || 'unknown',
+      sfname: sfname || '',
+      name: sfname || 'CWC Property',
+      id: '',
+      protection_type: 'N/A',
+      year: p.cleaned_da || p.Year || 'N/A',
+      acreage: p.clean_acre || 'N/A',
       county: p.cleaned_co || p.County || 'N/A',
       township: p.cleaned_to || '',
-      date: p.cleaned_da || p.Year || 'N/A',
-      access: p.cleaned_ac || 'N/A',
+      description: 'No additional information available for this property.',
     };
 
     // Clear previous selection
@@ -929,9 +959,9 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
     selectedIds = [e.features[0].id];
     map.setFeatureState({ source: 'properties', id: e.features[0].id }, { selected: true });
 
-    openDetail(content);
+    openDetail(site);
     const centroid = featureCentroid(e.features[0].geometry) || [e.lngLat.lng, e.lngLat.lat];
-    activeLabel.setLngLat(centroid).setText(content.name).addTo(map);
+    activeLabel.setLngLat(centroid).setText(site.name).addTo(map);
     const sidebar = document.getElementById('sidebar');
     const sidebarW = sidebar.classList.contains('collapsed') ? 0 : sidebar.offsetWidth;
     map.flyTo({ center: centroid, zoom: 13, duration: 800, offset: [sidebarW / 2, 0] });
@@ -993,34 +1023,41 @@ function renderList() {
 
   const sites = Object.values(siteContent);
 
-  // Rebuild type filter pills
-  const types = [...new Set(sites.map(s => s.type))].sort();
+  // Rebuild category filter pills
+  const categories = [...new Set(sites.map(s => siteCategory(s)))].sort();
   [...filterRow.querySelectorAll('[data-filter]:not([data-filter="all"])')].forEach(p => p.remove());
-  types.forEach(type => {
+  categories.forEach(cat => {
     const pill = document.createElement('button');
-    pill.className = 'filter-pill';
-    pill.textContent = type;
-    pill.dataset.filter = type;
-    pill.onclick = function() { setFilter(type, this); };
+    pill.className = 'filter-pill' + (activeFilter === cat ? ' active' : '');
+    pill.textContent = cat;
+    pill.dataset.filter = cat;
+    pill.onclick = function() { setFilter(cat, this); };
     filterRow.appendChild(pill);
   });
 
   const filtered = sites
     .filter(s => {
-      const matchFilter = activeFilter === 'all' || s.type === activeFilter;
-      const matchSearch = !query || s.name.toLowerCase().includes(query) || s.type.toLowerCase().includes(query) || s.tags.some(t => t.toLowerCase().includes(query));
+      const matchFilter = activeFilter === 'all' || siteCategory(s) === activeFilter;
+      const matchSearch = !query ||
+        s.name.toLowerCase().includes(query) ||
+        (s.protection_type || '').toLowerCase().includes(query) ||
+        (s.county || '').toLowerCase().includes(query) ||
+        (s.township || '').toLowerCase().includes(query) ||
+        (s.description || '').toLowerCase().includes(query);
       return matchFilter && matchSearch;
     })
     .sort((a, b) => a.name.localeCompare(b.name));
 
   filtered.forEach((site, i) => {
+    const color = siteColor(site);
+    const key = site._key;
     const card = document.createElement('div');
-    card.className = 'site-card' + (activeSiteName === site.sfname ? ' active' : '');
+    card.className = 'site-card' + (activeSiteName === key ? ' active' : '');
     card.style.animationDelay = `${i * 0.04}s`;
-    card.id = `card-${site.sfname.replace(/[\s']/g, '-')}`;
+    card.id = `card-${key.replace(/[\s']/g, '-')}`;
     card.onclick = () => {
       openDetail(site);
-      const center = centroidBySfname(site.sfname);
+      const center = centroidBySfname(site.sfname || site.name);
       if (center) {
         const sidebar = document.getElementById('sidebar');
         const sidebarW = sidebar.classList.contains('collapsed') ? 0 : sidebar.offsetWidth;
@@ -1028,11 +1065,11 @@ function renderList() {
       }
     };
     card.innerHTML = `
-      <div class="site-dot" style="background:${site.color};color:${site.color}"></div>
+      <div class="site-dot" style="background:${color};color:${color}"></div>
       <div class="site-card-body">
-        <div class="site-card-type">${site.type}</div>
+        <div class="site-card-type">${site.protection_type || ''}</div>
         <div class="site-card-name">${site.name}</div>
-        <div class="site-card-desc">${site.desc}</div>
+        <div class="site-card-desc">${site.description || ''}</div>
       </div>
     `;
     list.appendChild(card);
@@ -1052,60 +1089,53 @@ function openDetail(site) {
 
   // Highlight card
   document.querySelectorAll('.site-card').forEach(c => c.classList.remove('active'));
-  const cardEl = document.getElementById(`card-${site.sfname.replace(/[\s']/g, '-')}`);
+  const siteKey = site._key || site.sfname || site.name;
+  const cardEl = document.getElementById(`card-${siteKey.replace(/[\s']/g, '-')}`);
   if (cardEl) { cardEl.classList.add('active'); cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
 
-  activeSiteName = site.sfname;
+  activeSiteName = siteKey;
 
   // Hero
-  heroBg.style.background = `radial-gradient(ellipse at 30% 50%, ${site.color}44, transparent 70%), radial-gradient(ellipse at 70% 80%, ${site.color}22, transparent 60%)`;
-  badge.textContent = site.type;
-  badge.style.background = site.color + '22';
-  badge.style.color = site.color;
-  badge.style.border = `1px solid ${site.color}44`;
+  const color = siteColor(site);
+  heroBg.style.background = `radial-gradient(ellipse at 30% 50%, ${color}44, transparent 70%), radial-gradient(ellipse at 70% 80%, ${color}22, transparent 60%)`;
+  badge.textContent = siteCategory(site);
+  badge.style.background = color + '22';
+  badge.style.color = color;
+  badge.style.border = `1px solid ${color}44`;
   title.textContent = site.name;
 
   const township = site.township ? `, ${site.township} Twp` : '';
+  const idLabel = site.id ? `<span style="font-size:11px;color:var(--text-muted);margin-left:8px;font-weight:400;">${site.id}</span>` : '';
 
   body.innerHTML = `
     <div class="detail-coords">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
-      ${site.county} County${township}
+      ${site.county} County${township}${idLabel}
     </div>
 
     <div class="detail-section">
       <div class="detail-section-title">Overview</div>
-      <p>${site.desc}</p>
+      <p>${site.description || 'No additional information available for this property.'}</p>
     </div>
 
     <div class="detail-section">
       <div class="detail-section-title">Key Facts</div>
       <div class="detail-facts">
         <div class="detail-fact">
-          <div class="detail-fact-value">${site.total_acres} ac</div>
+          <div class="detail-fact-value">${site.acreage !== undefined && site.acreage !== 'N/A' ? site.acreage + ' ac' : 'N/A'}</div>
           <div class="detail-fact-label">Area</div>
         </div>
         <div class="detail-fact">
-          <div class="detail-fact-value">${site.date}</div>
-          <div class="detail-fact-label">Acquired</div>
+          <div class="detail-fact-value">${site.year || 'N/A'}</div>
+          <div class="detail-fact-label">Year Protected</div>
         </div>
-        <div class="detail-fact">
-          <div class="detail-fact-value">${site.species}</div>
-          <div class="detail-fact-label">Species Documented</div>
-        </div>
-        <div class="detail-fact">
-          <div class="detail-fact-value">${site.access}</div>
-          <div class="detail-fact-label">Public Access</div>
+        <div class="detail-fact" style="grid-column:1/-1;">
+          <div class="detail-fact-value" style="font-size:13px;font-weight:600;line-height:1.3;">${site.protection_type || 'N/A'}</div>
+          <div class="detail-fact-label">Protection Type</div>
         </div>
       </div>
     </div>
 
-    <div class="detail-section">
-      <div class="detail-section-title">Tags</div>
-      <div class="detail-tags">
-        ${site.tags.map(t => `<span class="detail-tag">${t}</span>`).join('')}
-      </div>
-    </div>
   `;
 
   document.getElementById('sidebar').classList.remove('collapsed');
