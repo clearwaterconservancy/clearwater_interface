@@ -105,7 +105,7 @@
     left: 0;
     top: 60px;
     height: calc(100% - 60px);
-    width: 460px;
+    width: calc(100vw / 6);
     background: var(--bg-panel);
     border-right: 1px solid var(--border);
     display: flex;
@@ -116,6 +116,63 @@
 
   .sidebar.collapsed {
     transform: translateX(-100%);
+  }
+
+  /* ── SIDEBAR MOBILE (bottom sheet) ── */
+  @media (max-width: 768px) {
+    .sidebar {
+      top: auto !important;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100% !important;
+      height: 65vh;
+      border-right: none;
+      border-top: 1px solid var(--border);
+      border-radius: 14px 14px 0 0;
+      transform: translateY(0);
+    }
+
+    .sidebar.collapsed {
+      transform: translateY(calc(100% - 44px)) !important;
+    }
+
+    .sidebar-tab {
+      position: relative !important;
+      right: auto !important;
+      top: 0 !important;
+      left: 0 !important;
+      transform: none !important;
+      width: 100% !important;
+      height: 44px !important;
+      border-radius: 14px 14px 0 0 !important;
+      border: none !important;
+      border-bottom: 1px solid var(--border) !important;
+      box-shadow: none !important;
+      flex-shrink: 0;
+    }
+
+    .sidebar-tab::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 4px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 2px;
+    }
+
+    /* Arrow points up when collapsed (tap to expand) */
+    .sidebar.collapsed .sidebar-tab .tab-arrow {
+      transform: rotate(-90deg) !important;
+    }
+
+    /* Arrow points down when expanded (tap to collapse) */
+    .sidebar-tab .tab-arrow {
+      transform: rotate(90deg) !important;
+    }
   }
 
   /* ── PANEL VIEWPORT & SLIDING VIEWS ── */
@@ -356,6 +413,13 @@
     border-top-color: rgba(0, 20, 35, 0.88);
   }
 
+  /* Mapbox logo — center bottom */
+  .mapboxgl-ctrl-bottom-left {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    bottom: 0 !important;
+  }
+
   /* Mapbox overrides */
   .mapboxgl-ctrl-group {
     background: var(--bg-panel) !important;
@@ -568,6 +632,19 @@
     pointer-events: none;
   }
 
+  /* ── ACTIVE SITE LABEL ── */
+  .site-active-label {
+    font-family: var(--fonthg);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--sky);
+    text-shadow: 0 1px 6px rgba(0,0,0,0.95), 0 0 16px rgba(0,0,0,0.7);
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+    pointer-events: none;
+    padding-bottom: 6px;
+  }
+
   /* ── TOOLTIP ── */
   .map-tooltip .mapboxgl-popup-content {
     background: var(--bg-panel);
@@ -627,15 +704,115 @@
     animation: fadeInUp 0.35s ease both;
   }
 
-  /* ── MAP TILES ── */
-
-  /* ── PULSE ANIMATION ── */
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 12px currentColor, 0 2px 8px rgba(0,0,0,0.3); }
-    50% { box-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+  /* ── MAP STYLE TOGGLE ── */
+  .map-style-toggle {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 
-  .marker-pulse { animation: pulse 2s ease-in-out infinite; }
+  .map-style-group {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow);
+  }
+
+  .map-style-btn {
+    padding: 7px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--fonthg);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    background: var(--bg-panel);
+    color: var(--text-muted);
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .map-style-btn + .map-style-btn {
+    border-left: 1px solid var(--border);
+  }
+
+  .map-style-btn:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+  }
+
+  .map-style-btn.active {
+    background: var(--accent);
+    color: var(--navy);
+  }
+
+  /* ── MAP LEGEND ── */
+  .map-legend {
+    position: absolute;
+    top: 60px;
+    right: 14px;
+    z-index: 400;
+    background: var(--bg-panel-trans);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    min-width: 180px;
+    box-shadow: var(--shadow);
+  }
+
+  .legend-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 9px;
+  }
+
+  .legend-section-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.35);
+    margin: 8px 0 5px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  .legend-item:last-child { margin-bottom: 0; }
+
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .legend-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+    font-family: var(--fonthg);
+  }
+
+  .legend-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    margin: 8px 0;
+  }
+
 
   /* ── SIDEBAR TAB ── */
   .sidebar-tab {
@@ -691,7 +868,7 @@
 <!-- APP -->
 <div class="app">
   <!-- SIDEBAR -->
-  <div class="sidebar" id="sidebar">
+  <div class="sidebar collapsed" id="sidebar">
     <button class="sidebar-tab" onclick="toggleSidebar()" title="Toggle site list">
       <svg class="tab-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <polyline points="15 18 9 12 15 6"/>
@@ -708,15 +885,11 @@
             <div class="subtitle">Central Pennsylvania Region</div>
             <div class="stat-row">
               <div class="stat">
-                <div class="stat-value">18</div>
+                <div class="stat-value" id="statSites">—</div>
                 <div class="stat-label">Sites</div>
               </div>
               <div class="stat">
-                <div class="stat-value">5</div>
-                <div class="stat-label">Categories</div>
-              </div>
-              <div class="stat">
-                <div class="stat-value">6</div>
+                <div class="stat-value" id="statCounties">—</div>
                 <div class="stat-label">Counties</div>
               </div>
             </div>
@@ -758,6 +931,44 @@
   <!-- MAP -->
   <div class="map-container">
     <div id="map"></div>
+    <div class="map-style-toggle">
+      <div class="map-style-group">
+        <button class="map-style-btn" onclick="resetMapView()">Reset</button>
+      </div>
+      <div class="map-style-group">
+        <button class="map-style-btn active" id="styleBtnVector" onclick="setMapStyle('vector', this)">Vector</button>
+        <button class="map-style-btn" id="styleBtnSatellite" onclick="setMapStyle('satellite', this)">Satellite</button>
+      </div>
+    </div>
+    <div class="map-legend">
+      <div class="legend-title">Legend</div>
+
+      <div class="legend-section-label">CWC Properties</div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: rgb(72,159,223);"></div>
+        <span class="legend-label">Conservation Easement</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: rgb(239,237,234);"></div>
+        <span class="legend-label">ClearWater Owned</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: rgb(240,179,35);"></div>
+        <span class="legend-label">Facilitated</span>
+      </div>
+
+      <hr class="legend-divider">
+
+      <div class="legend-section-label">Public Lands</div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: #3a5c30;"></div>
+        <span class="legend-label">State Game Lands</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: #7aaa65;"></div>
+        <span class="legend-label">National / State Parks</span>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -836,13 +1047,37 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGVhbHRoeSIsImEiOiJjbWx4amZyaDUwc3NpM2Zwb2N4b
 
 const map = new mapboxgl.Map({
   container: 'map',
-  style: 'mapbox://styles/dealthy/cmmcaawvh00aa01qn4yc04lin',
-  center: [-78.002306, 40.758736],
-  zoom: 10,
-  pitch: 60
+  style: 'mapbox://styles/dealthy/cmmdy4f6w004u01s92x0b0zgm',
+  center: [-77.8479000421826, 40.84578083510945],
+  zoom: 12,
+  pitch: 55,
+  maxBounds: [
+    [-78.75, 40.15],  // SW corner — west of Blair/Clearfield, south of Huntingdon
+    [-77.10, 41.45]   // NE corner — east of Mifflin, north of Clearfield
+  ]
 });
 
 map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+// ── MAP STYLE TOGGLE ──
+const MAP_STYLES = {
+  vector:    'mapbox://styles/dealthy/cmmdy4f6w004u01s92x0b0zgm',
+  satellite: 'mapbox://styles/dealthy/cmmcaawvh00aa01qn4yc04lin'
+};
+
+let currentStyleKey = 'vector';
+
+function setMapStyle(styleKey, btn) {
+  document.querySelectorAll('.map-style-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentStyleKey = styleKey;
+  map.setStyle(MAP_STYLES[styleKey]);
+  map.once('style.load', addPropertyLayers);
+}
+
+function resetMapView() {
+  map.flyTo({ center: [-77.8479000421826, 40.84578083510945], zoom: 12, pitch: 55, duration: 800 });
+}
 
 // ── MAP + CONTENT LOAD ──
 const mapLoadPromise = new Promise(resolve => map.on('load', resolve));
@@ -853,6 +1088,9 @@ const shpLoadPromise = shp('data/wgs84clean/cwc_wgs84_clean_nocol.zip').catch(er
 
 // Global reference so card clicks can look up centroids
 let propertiesGeojson = null;
+let colorExpr = null;
+let hoveredId = null;
+let selectedIds = [];
 
 function centroidBySfname(sfname) {
   if (!propertiesGeojson) return null;
@@ -863,60 +1101,74 @@ function centroidBySfname(sfname) {
   return feature ? featureCentroid(feature.geometry) : null;
 }
 
-Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geojson]) => {
-  propertiesGeojson = geojson;
-  map.addSource('properties', {
-    type: 'geojson',
-    data: geojson,
-    generateId: true
-  });
+function addPropertyLayers() {
+  if (!propertiesGeojson) return;
+
+  if (!map.getSource('properties')) {
+    map.addSource('properties', {
+      type: 'geojson',
+      data: propertiesGeojson,
+      generateId: true
+    });
+  }
 
   // Fill
-  const colorExpr = buildColorExpression();
-  map.addLayer({
-    id: 'properties-fill',
-    type: 'fill',
-    source: 'properties',
-    paint: { 'fill-color': colorExpr, 'fill-opacity': 0.45 }
-  });
+  if (!map.getLayer('properties-fill')) {
+    map.addLayer({
+      id: 'properties-fill',
+      type: 'fill',
+      source: 'properties',
+      paint: { 'fill-color': colorExpr, 'fill-opacity': 0.45 }
+    });
+  }
 
   // Hover highlight
-  map.addLayer({
-    id: 'properties-hover',
-    type: 'fill',
-    source: 'properties',
-    paint: {
-      'fill-color': '#ffffff',
-      'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.2, 0]
-    }
-  });
+  if (!map.getLayer('properties-hover')) {
+    map.addLayer({
+      id: 'properties-hover',
+      type: 'fill',
+      source: 'properties',
+      paint: {
+        'fill-color': '#ffffff',
+        'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.2, 0]
+      }
+    });
+  }
 
   // Selected highlight
-  map.addLayer({
-    id: 'properties-selected',
-    type: 'fill',
-    source: 'properties',
-    paint: {
-      'fill-color': '#ffffff',
-      'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.15, 0]
-    }
-  });
+  if (!map.getLayer('properties-selected')) {
+    map.addLayer({
+      id: 'properties-selected',
+      type: 'fill',
+      source: 'properties',
+      paint: {
+        'fill-color': currentStyleKey === 'satellite' ? '#ffffff' : '#000000',
+        'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.2, 0]
+      }
+    });
+  }
 
   // Outline
-  map.addLayer({
-    id: 'properties-outline',
-    type: 'line',
-    source: 'properties',
-    paint: {
-      'line-color': colorExpr,
-      'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 2.5, 1.2],
-      'line-opacity': 0.9
-    }
-  });
+  if (!map.getLayer('properties-outline')) {
+    map.addLayer({
+      id: 'properties-outline',
+      type: 'line',
+      source: 'properties',
+      paint: {
+        'line-color': ['case', ['boolean', ['feature-state', 'selected'], false], 'rgb(217, 235, 249)', colorExpr],
+        'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3, 1.2],
+        'line-opacity': 0.9
+      }
+    });
+  }
 
-  // Hover state
-  let hoveredId = null;
-  let selectedIds = [];
+  hoveredId = null;
+}
+
+Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geojson]) => {
+  propertiesGeojson = geojson;
+  colorExpr = buildColorExpression();
+  addPropertyLayers();
 
   map.on('mousemove', 'properties-fill', e => {
     if (e.features.length > 0) {
@@ -925,8 +1177,10 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
       map.setFeatureState({ source: 'properties', id: hoveredId }, { hover: true });
     }
     map.getCanvas().style.cursor = 'pointer';
-    const name = e.features[0].properties.cleaned_na;
-    if (name) tooltip.setLngLat(e.lngLat).setText(name).addTo(map);
+    const sfname = e.features[0].properties.cleaned_na;
+    const site = sfname ? resolveContent(sfname) : null;
+    const label = site?.name || sfname;
+    if (label) tooltip.setLngLat(e.lngLat).setText(label).addTo(map);
   });
 
   map.on('mouseleave', 'properties-fill', () => {
@@ -961,13 +1215,13 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
 
     openDetail(site);
     const centroid = featureCentroid(e.features[0].geometry) || [e.lngLat.lng, e.lngLat.lat];
-    activeLabel.setLngLat(centroid).setText(site.name).addTo(map);
-    const sidebar = document.getElementById('sidebar');
-    const sidebarW = sidebar.classList.contains('collapsed') ? 0 : sidebar.offsetWidth;
-    map.flyTo({ center: centroid, zoom: 13, duration: 800, offset: [sidebarW / 2, 0] });
+    showActiveLabel(site.name, centroid);
+    map.flyTo({ center: centroid, zoom: 13, duration: 800 });
   });
 
   // ── POLYGON LABELS ──
+  permanentLabels.forEach(p => p.remove());
+  permanentLabels = [];
   labeledSfnames.forEach(sfname => {
     const canonical = CONTENT_ALIAS[sfname] || sfname;
     const feature = geojson.features.find(f =>
@@ -979,7 +1233,7 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
     const editorial = siteContent[sfname] || siteContent[canonical];
     const label = editorial?.name || sfname;
 
-    new mapboxgl.Popup({
+    const popup = new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: false,
       anchor: 'bottom',
@@ -989,6 +1243,7 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
       .setLngLat(c)
       .setText(label)
       .addTo(map);
+    permanentLabels.push(popup);
   });
 
   renderList();
@@ -999,11 +1254,20 @@ const tooltip = new mapboxgl.Popup({
   offset: [0, -8], className: 'map-tooltip'
 });
 
-const activeLabel = new mapboxgl.Popup({
-  closeButton: false, closeOnClick: false,
-  anchor: 'bottom', className: 'site-label-popup',
-  maxWidth: 'none'
-});
+let activeLabelMarker = null;
+let permanentLabels = [];
+
+function showActiveLabel(name, lngLat) {
+  if (activeLabelMarker) { activeLabelMarker.remove(); activeLabelMarker = null; }
+  permanentLabels.forEach(p => p.getElement().style.display = 'none');
+  if (!name || !lngLat) return;
+  const el = document.createElement('div');
+  el.className = 'site-active-label';
+  el.textContent = name;
+  activeLabelMarker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+    .setLngLat(lngLat)
+    .addTo(map);
+}
 
 // ── CATEGORIES & LIST ──
 let activeFilter = 'all';
@@ -1057,11 +1321,23 @@ function renderList() {
     card.id = `card-${key.replace(/[\s']/g, '-')}`;
     card.onclick = () => {
       openDetail(site);
-      const center = centroidBySfname(site.sfname || site.name);
+      const sfname = site.sfname || site.name;
+      const center = centroidBySfname(sfname);
+
+      // Clear previous selection and select this feature
+      selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: false }));
+      if (map.getSource('properties')) {
+        const canonical = CONTENT_ALIAS[sfname] || sfname;
+        const features = map.querySourceFeatures('properties', {
+          filter: ['==', ['get', 'cleaned_na'], canonical]
+        });
+        selectedIds = features.map(f => f.id);
+        selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: true }));
+      }
+
       if (center) {
-        const sidebar = document.getElementById('sidebar');
-        const sidebarW = sidebar.classList.contains('collapsed') ? 0 : sidebar.offsetWidth;
-        map.flyTo({ center, zoom: 13, duration: 800, offset: [sidebarW / 2, 0] });
+        showActiveLabel(site.name, center);
+        map.flyTo({ center, zoom: 13, duration: 800 });
       }
     };
     card.innerHTML = `
@@ -1146,12 +1422,17 @@ function closeDetail() {
   document.getElementById('panelViews').classList.remove('show-detail');
   document.querySelectorAll('.site-card').forEach(c => c.classList.remove('active'));
   activeSiteName = null;
-  activeLabel.remove();
-  map.flyTo({ center: [-78.002306, 40.758736], zoom: 10, pitch: 60, duration: 800 });
+  if (activeLabelMarker) { activeLabelMarker.remove(); activeLabelMarker = null; }
+  permanentLabels.forEach(p => p.getElement().style.display = '');
 }
 
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// On desktop, start with the sidebar open
+if (window.innerWidth > 768) {
+  document.getElementById('sidebar').classList.remove('collapsed');
 }
 
 function showView(view) {
@@ -1160,7 +1441,15 @@ function showView(view) {
 }
 
 // Init — sidebar list renders once content files are loaded
-contentLoadPromise.then(() => renderList());
+contentLoadPromise.then(() => {
+  renderList();
+  const sites = Object.values(siteContent);
+  document.getElementById('statSites').textContent = sites.length;
+  const counties = new Set(
+    sites.flatMap(s => (s.county || '').split(',').map(c => c.trim()).filter(Boolean))
+  );
+  document.getElementById('statCounties').textContent = counties.size;
+});
 document.getElementById('detailBackBtn').addEventListener('click', closeDetail);
 </script>
 </body>
