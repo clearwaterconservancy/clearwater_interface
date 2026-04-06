@@ -441,30 +441,11 @@
   }
 
   /* ── DETAIL PANEL ── */
-  .detail-hero {
-    height: 200px;
-    position: relative;
-    overflow: hidden;
+
+  .detail-header {
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--border);
     flex-shrink: 0;
-  }
-
-  .detail-hero-bg {
-    position: absolute;
-    inset: 0;
-    opacity: 0.35;
-  }
-
-  .detail-hero-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, var(--bg-panel-trans), transparent 60%);
-  }
-
-  .detail-hero-content {
-    position: absolute;
-    bottom: 20px;
-    left: 24px;
-    right: 24px;
   }
 
   .detail-type-badge {
@@ -474,15 +455,15 @@
     letter-spacing: 0.1em;
     padding: 4px 10px;
     border-radius: 20px;
-    margin-bottom: 8px;
+    margin-bottom: 5px;
     font-weight: 600;
   }
 
   .detail-title {
     font-family: var(--fonthg);
-    font-size: 26px;
-    font-weight: 400;
-    line-height: 1.15;
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.2;
   }
 
   .detail-body {
@@ -913,13 +894,9 @@
               Back to Sites
             </button>
           </div>
-          <div class="detail-hero" id="detailHero">
-            <div class="detail-hero-bg" id="detailHeroBg"></div>
-            <div class="detail-hero-overlay"></div>
-            <div class="detail-hero-content">
-              <div class="detail-type-badge" id="detailBadge"></div>
-              <div class="detail-title" id="detailTitle"></div>
-            </div>
+          <div class="detail-header">
+            <div class="detail-type-badge" id="detailBadge"></div>
+            <div class="detail-title" id="detailTitle"></div>
           </div>
           <div class="detail-body" id="detailBody"></div>
         </div>
@@ -1011,6 +988,12 @@ function siteColor(site) {
   return SUN_COLOR;
 }
 
+function siteOutlineColor(site) {
+  const id = (site.id || '').split('_')[0];
+  if (id.startsWith('Fee')) return '#000000';  // owned sites get black border
+  return siteColor(site);
+}
+
 // Builds a Mapbox GL 'match' expression mapping cleaned_na → site color
 function buildColorExpression() {
   const entries = [];
@@ -1021,6 +1004,19 @@ function buildColorExpression() {
     seen.add(name);
     const site = resolveContent(name);
     entries.push(name, site ? siteColor(site) : SUN_COLOR);
+  });
+  return entries.length ? ['match', ['get', 'cleaned_na'], ...entries, SUN_COLOR] : SUN_COLOR;
+}
+
+function buildOutlineColorExpression() {
+  const entries = [];
+  const seen = new Set();
+  propertiesGeojson.features.forEach(f => {
+    const name = f.properties.cleaned_na;
+    if (!name || seen.has(name)) return;
+    seen.add(name);
+    const site = resolveContent(name);
+    entries.push(name, site ? siteOutlineColor(site) : SUN_COLOR);
   });
   return entries.length ? ['match', ['get', 'cleaned_na'], ...entries, SUN_COLOR] : SUN_COLOR;
 }
@@ -1089,6 +1085,7 @@ const shpLoadPromise = shp('data/wgs84clean/cwc_wgs84_clean_nocol.zip').catch(er
 // Global reference so card clicks can look up centroids
 let propertiesGeojson = null;
 let colorExpr = null;
+let outlineColorExpr = null;
 let hoveredId = null;
 let selectedIds = [];
 
@@ -1155,7 +1152,7 @@ function addPropertyLayers() {
       type: 'line',
       source: 'properties',
       paint: {
-        'line-color': ['case', ['boolean', ['feature-state', 'selected'], false], 'rgb(217, 235, 249)', colorExpr],
+        'line-color': ['case', ['boolean', ['feature-state', 'selected'], false], 'rgb(217, 235, 249)', outlineColorExpr],
         'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3, 1.2],
         'line-opacity': 0.9
       }
@@ -1168,6 +1165,7 @@ function addPropertyLayers() {
 Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geojson]) => {
   propertiesGeojson = geojson;
   colorExpr = buildColorExpression();
+  outlineColorExpr = buildOutlineColorExpression();
   addPropertyLayers();
 
   map.on('mousemove', 'properties-fill', e => {
@@ -1216,7 +1214,7 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
     openDetail(site);
     const centroid = featureCentroid(e.features[0].geometry) || [e.lngLat.lng, e.lngLat.lat];
     showActiveLabel(site.name, centroid);
-    map.flyTo({ center: centroid, zoom: 13, duration: 800 });
+    map.flyTo({ center: centroid, duration: 800 });
   });
 
   // ── POLYGON LABELS ──
@@ -1337,7 +1335,7 @@ function renderList() {
 
       if (center) {
         showActiveLabel(site.name, center);
-        map.flyTo({ center, zoom: 13, duration: 800 });
+        map.flyTo({ center, duration: 800 });
       }
     };
     card.innerHTML = `
@@ -1373,7 +1371,7 @@ function openDetail(site) {
 
   // Hero
   const color = siteColor(site);
-  heroBg.style.background = `radial-gradient(ellipse at 30% 50%, ${color}44, transparent 70%), radial-gradient(ellipse at 70% 80%, ${color}22, transparent 60%)`;
+  if (heroBg) heroBg.style.background = `radial-gradient(ellipse at 30% 50%, ${color}44, transparent 70%), radial-gradient(ellipse at 70% 80%, ${color}22, transparent 60%)`;
   badge.textContent = siteCategory(site);
   badge.style.background = color + '22';
   badge.style.color = color;
@@ -1422,6 +1420,8 @@ function closeDetail() {
   document.getElementById('panelViews').classList.remove('show-detail');
   document.querySelectorAll('.site-card').forEach(c => c.classList.remove('active'));
   activeSiteName = null;
+  selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: false }));
+  selectedIds = [];
   if (activeLabelMarker) { activeLabelMarker.remove(); activeLabelMarker = null; }
   permanentLabels.forEach(p => p.getElement().style.display = '');
 }
