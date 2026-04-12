@@ -10,3 +10,5 @@ todos:
 7. put back zooming in to sites, fit it optimally for rockview
 8. go back to pitch 60
 9. add mapbox grass green to legend
+10. town roads appear at high zoom levels
+12. state game land labels come out at a lower zoom level

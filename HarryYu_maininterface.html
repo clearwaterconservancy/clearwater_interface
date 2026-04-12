@@ -926,12 +926,16 @@
         <span class="legend-label">Conservation Easement</span>
       </div>
       <div class="legend-item">
-        <div class="legend-swatch" style="background: rgb(239,237,234);"></div>
+        <div class="legend-swatch" style="background: rgb(239,237,234); border-color: #8431d6;"></div>
         <span class="legend-label">ClearWater Owned</span>
       </div>
       <div class="legend-item">
         <div class="legend-swatch" style="background: rgb(240,179,35);"></div>
         <span class="legend-label">Facilitated</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: rgba(0,0,0,0.2); border-color: #ffffff;"></div>
+        <span class="legend-label">Selected</span>
       </div>
 
       <hr class="legend-divider">
@@ -944,6 +948,18 @@
       <div class="legend-item">
         <div class="legend-swatch" style="background: #7aaa65;"></div>
         <span class="legend-label">National / State Parks</span>
+      </div>
+
+      <hr class="legend-divider">
+
+      <div class="legend-section-label">Basemap</div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: #24afff;"></div>
+        <span class="legend-label">Water</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: #b1dea6;"></div>
+        <span class="legend-label">Vegetation</span>
       </div>
     </div>
   </div>
@@ -990,7 +1006,7 @@ function siteColor(site) {
 
 function siteOutlineColor(site) {
   const id = (site.id || '').split('_')[0];
-  if (id.startsWith('Fee')) return '#000000';  // owned sites get black border
+  if (id.startsWith('Fee')) return '#8431d6';  // owned sites get purple border
   return siteColor(site);
 }
 
@@ -1046,7 +1062,7 @@ const map = new mapboxgl.Map({
   style: 'mapbox://styles/dealthy/cmmdy4f6w004u01s92x0b0zgm',
   center: [-77.8479000421826, 40.84578083510945],
   zoom: 12,
-  pitch: 55,
+  pitch: 65,
   maxBounds: [
     [-78.75, 40.15],  // SW corner — west of Blair/Clearfield, south of Huntingdon
     [-77.10, 41.45]   // NE corner — east of Mifflin, north of Clearfield
@@ -1072,7 +1088,7 @@ function setMapStyle(styleKey, btn) {
 }
 
 function resetMapView() {
-  map.flyTo({ center: [-77.8479000421826, 40.84578083510945], zoom: 12, pitch: 55, duration: 800 });
+  map.flyTo({ center: [-77.8479000421826, 40.84578083510945], zoom: 12, pitch: 60, duration: 800 });
 }
 
 // ── MAP + CONTENT LOAD ──
@@ -1214,7 +1230,7 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
     openDetail(site);
     const centroid = featureCentroid(e.features[0].geometry) || [e.lngLat.lng, e.lngLat.lat];
     showActiveLabel(site.name, centroid);
-    map.flyTo({ center: centroid, duration: 800 });
+    map.flyTo({ center: centroid, duration: 800, zoom: 12.6 });
   });
 
   // ── POLYGON LABELS ──
@@ -1335,7 +1351,7 @@ function renderList() {
 
       if (center) {
         showActiveLabel(site.name, center);
-        map.flyTo({ center, duration: 800 });
+        map.flyTo({ center, zoom: 12.6, duration: 800 });
       }
     };
     card.innerHTML = `
