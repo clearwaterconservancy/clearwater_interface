@@ -1,8 +1,8 @@
 {
   "labeled": [
-    "Gray's Woods Preserve", 
-    "Rockview - PSU", 
-    "Millbrook Marsh"
+    "CE024", 
+    "CE015", 
+    "CE004"
   ],
   "aliases": {
     "Rockview - PFBC": "Rockview - PAGC",
@@ -242,7 +242,7 @@
       "sfname": "Rockview - PSU"
     },
     {
-      "id": "Fac005_006_007",
+      "id": "Fac005_Fac006_Fac007",
       "name": "Rockview (Facilitated Conveyances)",
       "protection_type": "Facilitated Conveyance",
       "year": 2014,
@@ -349,7 +349,7 @@
       "county": "Blair",
       "township": "Snyder",
       "description": "Located just outside Tyrone, encompassing the entire watershed of Plummer's Run, a small mountain tributary draining Plummer's Hollow into the Little Juniata River before flowing to the Chesapeake Bay. With support from ClearWater, Marcia and Bruce Bonta donated a conservation easement on the property to the Western Pennsylvania Conservancy.",
-      "sfname": ""
+      "sfname": "Plummers Hollow"
     },
     {
       "id": "Fac013",
@@ -415,7 +415,7 @@
       "county": "Centre",
       "township": "Ferguson",
       "description": "After learning about ClearWater's Slab Cabin Run Initiative, property owner Joe Dionisio contacted ClearWater with interest in placing a conservation easement on Bella Vista Farm. As an initial step, the property owners worked with ClearWater and partners to establish a several-acre multi-functional riparian buffer; tree and shrub planting occurred in fall 2020 with additional meadow planting starting spring 2021. The property contains approximately 1,150 linear feet of Slab Cabin Run flowing west to east across the southern portion, an approximately six-acre planted multi-functional riparian buffer and native meadow along Slab Cabin Run, and approximately 475 linear feet of road frontage along State Route 45 (Shingletown Road) providing public scenic views.",
-      "sfname": ""
+      "sfname": "Happy Valley Lavender Farm"
     },
     {
       "id": "CE024_Fac011",
@@ -470,7 +470,7 @@
       "county": "Centre",
       "township": "Gregg",
       "description": "William Snyder, who routinely fishes Spring Creek, contacted ClearWater in 2021 about donating a conservation easement on his property in Little Sugar Valley. The property is on the dividing ridge of Nittany Mountain and comprised of high gradient clearwater creeks, mature oaks and hemlocks, and steep rocky slopes. It is part of the Roaring Run Biological Diversity Area, a designated PA Natural Heritage Site.",
-      "sfname": ""
+      "sfname": "Little Sugar Valley"
     },
     {
       "id": "CE027",
@@ -481,7 +481,7 @@
       "county": "Huntingdon",
       "township": "Franklin",
       "description": "The Colerain Forges Mansion is a regionally and nationally significant historic site in the Spruce Creek Valley. The property was jointly owned by a nonprofit formed in 2019 (the Colerain Center for Education, Preservation, and the Arts) and the same family that has owned the mansion since the 1980s. The owners contacted ClearWater about donating a conservation easement. The property contains a significant stretch of Warriors Mark Run, just upstream from its confluence with Spruce Creek, and was the site of a USFWS in-stream restoration around the time of the conservation easement.",
-      "sfname": ""
+      "sfname": "Colerain Mansion"
     },
     {
       "id": "Fac017",
@@ -537,6 +537,26 @@
       "township": "Benner",
       "description": "On the edge of the Spring Creek Watershed, a conservation easement was donated on the Daryabar property (owners wish to remain anonymous). The steep, rocky, wooded property is located on Bald Eagle Mountain and contains an unnamed tributary to Buffalo Run. In addition to the conservation easement, a Public Trail Easement was established on a 12-acre section to share the incredible north and south views from the top of the ridge.",
       "sfname": ""
+    },
+    {
+      "id": "CE031", 
+      "name": "Schraer's Stover Gap", 
+      "protection_type": "Conservation Easement",
+      "year": 2025,
+      "acreage": 245.03,
+      "county": "Centre County",
+      "township": "Haines Township",
+      "description": "The project protects an exceptional landscape on Shriner Mountain, located adjacent to a Centre County Farmland Trust (CCFT)–preserved farm just east of Aaronsburg in Penns Valley, and includes the Stover Gap Biological Diversity Area—recognized for its maturity, diversity, and county-wide ecological significance. The Schraer Family Tract, which has been in the Schraer family since 1971, includes approximately 185 acres of mature and mixed-age forest, 50 acres of agricultural fields, wetlands, headwater streams, and historic farm structures. The property contains 2,067 feet of an unnamed Exceptional Value (EV) tributary to Pine Creek, supporting naturally reproducing trout and contributing cold, clean water to Pine Creek, Elk Creek, Penns Creek, and ultimately the Susquehanna River and Chesapeake Bay. Stover Gap encompasses a 90-acre northern hardwood forest set within a rocky mountain gap, designated by the Pennsylvania Natural Heritage Program as a Natural Heritage Biodiversity Area of county-wide significance due to its exceptionally mature forest structure and species diversity. The conservation easement ensures the protection and continued growth of an unfragmented, maturing forest that provides habitat for numerous plant and animal species. Conservation of the property also strengthens a regional wildlife corridor linking Bald Eagle State Forest, the Penns Creek Wild Area, the Hook Natural Area, and State Game Lands 295—Together, these connected forested lands contribute to a north–south migration corridor for wildlife and natural communities, improving regional ecological resilience in the face of climate change, forest fragmentation, and habitat loss. ClearWater Conservancy’s Stover Gap Biological Diversity Area conservation easement was funded through the Open Space Institute’s Appalachian Landscapes Protection Fund."
+    }, 
+    {
+      "id": "Fac019", 
+      "name": "Don and Esther Smith Farm", 
+      "protection_type": "Conservation Easement",
+      "year": 2025,
+      "acreage": 77.34,
+      "county": "Centre County",
+      "township": "Spring Township",
+      "description": "In December 2025, Don and Esther Smith conserved their 77 acres of fields and woodlands. “It’s just a nice, perfect little place to live,” said Don Smith, whose wife, Esther, grew up on the land that was her family’s farm. The property is surrounded by development and the I-99 highway. The land is also adjacent to the Steeplechase residential sub-division and to the campus of the Central Pennsylvania Institute of Science and Technology Vocational School. The Smiths have lived on the property for 30 years, tending their vegetable garden with hundreds of tomato and pepper plants. The Ault family for many years has grown corn, soybeans, hay and grains on about 50 acres leased from the Smiths, an arrangement expected to continue. Their limestone house dates to the early 1800s and served as a stagecoach stop on the route between Lewisburg and Bellefonte. After several years on the PACE wait-list, the Smiths contacted the Centre County Farmland Trust to donate a conservation easement. Through a partnership with CCFT, ClearWater helped secure the conservation easement by assisting with easement documents, mapping and fieldwork. "
     }
   ]
 }

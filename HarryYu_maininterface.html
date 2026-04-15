@@ -369,6 +369,7 @@
     line-height: 1.45;
     display: -webkit-box;
     -webkit-line-clamp: 2;
+    line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
@@ -549,6 +550,33 @@
     border: 1px solid var(--border);
     color: var(--text-secondary);
     background: var(--bg-card);
+  }
+
+  .detail-photos {
+    display: block;
+  }
+  .detail-photo {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    cursor: zoom-in;
+  }
+  .detail-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+  .detail-photo:hover img { transform: scale(1.04); }
+  .detail-photos-empty {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
   }
 
   /* ── CUSTOM MARKERS ── */
@@ -970,28 +998,232 @@
 <script>
 // ── EDITORIAL CONTENT ──
 
-// All configured from data/sites.json
-let CONTENT_ALIAS = {};
-let labeledSfnames = [];
-const siteContent = {};
+// All configured from data/sites.json.
+// siteContent is keyed by UPPERCASED id (e.g. "CE023"); matching to shapefile uses Project_Nm.
+// A site may register under multiple ids (e.g. compound id "Fac005_006_007" → FAC005, FAC006, FAC007).
+let labeledIds = [];
+const siteContent = {}; // id → site object (may be shared across multiple keys)
+const siteList = [];    // unique site objects (for list/filter rendering)
 
-function resolveContent(sfname) {
-  const canonical = CONTENT_ALIAS[sfname] || sfname;
-  return siteContent[canonical] || null;
+// Normalize a single shapefile id (e.g. "ce001" → "CE001"). Returns '' for unusable input.
+const normId = v => {
+  if (v == null) return '';
+  const m = String(v).match(/[A-Za-z]+\d+/);
+  return m ? m[0].toUpperCase() : '';
+};
+
+// Expand a (possibly compound) sites.json id field into the full list of effective ids.
+//   "CE001"              → ["CE001"]
+//   "CE024_Fac011"       → ["CE024", "FAC011"]     // distinct prefixes
+//   "Fac005_006_007"     → ["FAC005", "FAC006", "FAC007"]  // trailing digits reuse previous prefix
+//   "CE029_Acc001_Acc002"→ ["CE029", "ACC001", "ACC002"]
+function expandIds(raw) {
+  if (!raw) return [];
+  const out = [];
+  let prefix = '';
+  for (const tok of String(raw).split('_').map(t => t.trim()).filter(Boolean)) {
+    const m = tok.match(/^([A-Za-z]+)(\d+)$/);
+    if (m) {
+      prefix = m[1];
+      out.push((prefix + m[2]).toUpperCase());
+    } else if (/^\d+$/.test(tok) && prefix) {
+      out.push((prefix + tok).toUpperCase());
+    } else {
+      console.warn(`[sites.json] unparseable id token "${tok}" in "${raw}"`);
+    }
+  }
+  return out;
+}
+
+function resolveContent(projectId) {
+  const k = normId(projectId);
+  return k ? (siteContent[k] || null) : null;
+}
+
+// Merge editorial (sites.json) with shapefile props.
+// sites.json wins on overlap; shapefile fills gaps and contributes shapefile-only fields.
+function mergeSiteWithProps(editorial, p) {
+  p = p || {};
+  const base = editorial || {};
+  const shpAcre = p.GIS_Acres != null && p.GIS_Acres !== '' ? p.GIS_Acres
+                : p.Proj_Acres != null && p.Proj_Acres !== '' ? p.Proj_Acres
+                : null;
+  return {
+    _key: normId(base.id || p.Project_Nm) || (p.CWC_NAME || 'unknown'),
+    sfname: base.sfname || p.CWC_NAME || '',
+    name: base.name || p.CWC_NAME || 'CWC Property',
+    id: base.id || p.Project_Nm || '',
+    description: base.description || 'No additional information available for this property.',
+    protection_type: base.protection_type || 'N/A',
+    year: base.year != null && base.year !== '' ? base.year : (p.Year || 'N/A'),
+    county: base.county || p.County || 'N/A',
+    township: base.township || p.Township || '',
+    acreage: base.acreage != null && base.acreage !== '' ? base.acreage : (shpAcre != null ? shpAcre : 'N/A'),
+    action: p.Action || 'N/A',
+    access: p.Access || 'N/A',
+    date: p.Date || 'N/A',
+  };
+}
+
+// Compare overlapping fields between sites.json and the shapefile; log any differences.
+function reportDataDiscrepancies(geojson) {
+  if (!geojson || !geojson.features) return;
+  const normTxt = v => (v == null ? '' : String(v)).trim().toLowerCase();
+  const normTown = v => normTxt(v).replace(/\s*(township|twp\.?)\s*$/i, '').trim();
+  const parseNum = v => {
+    if (v == null || v === '') return NaN;
+    const n = parseFloat(String(v).replace(/,/g, ''));
+    return isNaN(n) ? NaN : n;
+  };
+
+  const diffs = [];
+  const matchedIds = new Set();
+  const unmatchedFeatures = [];
+  geojson.features.forEach(f => {
+    const p = f.properties || {};
+    const projId = p.Project_Nm;
+    if (!projId) return;
+    const editorial = resolveContent(projId);
+    if (!editorial) { unmatchedFeatures.push({ projId, name: p.CWC_NAME }); return; }
+    matchedIds.add(normId(projId));
+
+    const fieldDiffs = [];
+
+    // name: editorial.name vs shapefile CWC_NAME
+    if (editorial.name && p.CWC_NAME
+        && normTxt(editorial.name) !== normTxt(p.CWC_NAME)
+        && normTxt(editorial.sfname) !== normTxt(p.CWC_NAME)) {
+      fieldDiffs.push({ field: 'name', sitesJson: editorial.name, shapefile: p.CWC_NAME });
+    }
+    // year
+    if (editorial.year != null && p.Year != null
+        && normTxt(editorial.year) !== normTxt(p.Year)) {
+      fieldDiffs.push({ field: 'year', sitesJson: editorial.year, shapefile: p.Year });
+    }
+    // county
+    if (editorial.county && p.County
+        && normTxt(editorial.county) !== normTxt(p.County)) {
+      fieldDiffs.push({ field: 'county', sitesJson: editorial.county, shapefile: p.County });
+    }
+    // township (strip "Twp"/"Township" suffix on shapefile side before comparing)
+    if (editorial.township && p.Township
+        && normTown(editorial.township) !== normTown(p.Township)) {
+      fieldDiffs.push({ field: 'township', sitesJson: editorial.township, shapefile: p.Township });
+    }
+    // acreage (tolerance 0.5 ac) — compared against GIS_Acres, falling back to Proj_Acres
+    const ed = parseNum(editorial.acreage);
+    const shpField = p.GIS_Acres != null && p.GIS_Acres !== '' ? 'GIS_Acres' : 'Proj_Acres';
+    const shp = parseNum(p[shpField]);
+    if (!isNaN(ed) && !isNaN(shp) && Math.abs(ed - shp) > 0.5) {
+      fieldDiffs.push({
+        field: 'acreage',
+        sitesJson: ed,
+        shapefile: `${shp} (${shpField})`,
+        delta: +(shp - ed).toFixed(2),
+      });
+    }
+
+    if (fieldDiffs.length) diffs.push({ site: editorial.name || projId, id: editorial.id || '', fields: fieldDiffs });
+  });
+
+  // A site is an orphan only if NONE of its expanded ids matched any shapefile Project_Nm.
+  const orphanSites = siteList.filter(s => !(s._ids || []).some(id => matchedIds.has(id)));
+
+  if (diffs.length === 0) {
+    console.log('%c[Data check] ✓ sites.json and shapefile agree on all overlapping fields', 'color:#3a9a6d;font-weight:bold;');
+  } else {
+    console.groupCollapsed(`%c[Data check] ${diffs.length} site(s) with sites.json ↔ shapefile discrepancies`,
+      'color:#c46a3a;font-weight:bold;');
+    diffs.forEach(d => {
+      const label = d.id ? `${d.site} (${d.id})` : d.site;
+      console.groupCollapsed(label);
+      d.fields.forEach(fd => {
+        const extra = fd.delta != null ? `  Δ=${fd.delta}` : '';
+        console.log(`  ${fd.field}:  sites.json=%o   shapefile=%o${extra}`, fd.sitesJson, fd.shapefile);
+      });
+      console.groupEnd();
+    });
+    console.groupEnd();
+  }
+
+  if (unmatchedFeatures.length) {
+    console.groupCollapsed(`%c[Data check] ${unmatchedFeatures.length} shapefile feature(s) with no matching sites.json id`,
+      'color:#c46a3a;');
+    unmatchedFeatures.forEach(u => console.log(`  Project_Nm="${u.projId}"  CWC_NAME="${u.name}"`));
+    console.groupEnd();
+  }
+  if (orphanSites.length) {
+    console.groupCollapsed(`%c[Data check] ${orphanSites.length} sites.json entry(ies) with no matching shapefile Project_Nm`,
+      'color:#c46a3a;');
+    orphanSites.forEach(s => console.log(`  id="${s.id}"  name="${s.name}"`));
+    console.groupEnd();
+  }
 }
 
 // ── LOAD EDITORIAL CONTENT ──
 const contentLoadPromise = fetch('data/sites.json')
   .then(r => r.json())
   .then(data => {
-    CONTENT_ALIAS = data.aliases || {};
-    labeledSfnames = data.labeled || [];
+    labeledIds = (data.labeled || []).flatMap(expandIds);
     data.sites.forEach(s => {
-      s._key = s.sfname || s.name;
-      siteContent[s._key] = s;
+      const ids = expandIds(s.id);
+      if (!ids.length) { console.warn('[sites.json] site has no parseable id, skipping:', s.name); return; }
+      s._ids = ids;
+      s._key = ids[0];
+      siteList.push(s);
+      ids.forEach(id => {
+        if (siteContent[id] && siteContent[id] !== s) {
+          console.warn(`[sites.json] id "${id}" is claimed by both "${siteContent[id].name}" and "${s.name}"`);
+        }
+        siteContent[id] = s;
+      });
     });
   })
   .catch(err => console.warn('Failed to load sites.json:', err));
+
+// ── LOAD PHOTO MANIFEST ──
+// data/photos.json is an array of filenames in data/Photos for Property Summaries/.
+// Each filename begins with one or more ids (e.g. "CE018 019 Meyer Everhart.JPG",
+// "FAC005 FAC006 FAC007 Rockview.JPG"). Trailing-digit-only tokens inherit the previous prefix.
+const PHOTOS_DIR = 'data/Photos%20for%20Property%20Summaries/';
+const photosById = {};   // UPPERCASED id → [filename, ...]
+
+function leadingIdsFromFilename(name) {
+  const ids = [];
+  let prefix = '';
+  const tokens = name.split(/\s+/);
+  for (const raw of tokens) {
+    const bare = raw.replace(/\.(jpe?g|png|webp|gif)$/i, '');
+    const withPrefix = bare.match(/^([A-Za-z]+)(\d+)$/);
+    if (withPrefix) { prefix = withPrefix[1]; ids.push((prefix + withPrefix[2]).toUpperCase()); continue; }
+    if (/^\d+$/.test(bare) && prefix) { ids.push((prefix + bare).toUpperCase()); continue; }
+    break; // first non-id token ends the id run
+  }
+  return ids;
+}
+
+const photosLoadPromise = fetch('data/photos.json')
+  .then(r => r.ok ? r.json() : [])
+  .then(list => {
+    (list || []).forEach(filename => {
+      const ids = leadingIdsFromFilename(filename);
+      if (!ids.length) return;
+      ids.forEach(id => {
+        (photosById[id] = photosById[id] || []).push(filename);
+      });
+    });
+  })
+  .catch(err => console.warn('Failed to load photos.json:', err));
+
+function photosForSite(site) {
+  const ids = site._ids || (site.id ? expandIds(site.id) : []);
+  const seen = new Set();
+  const out = [];
+  ids.forEach(id => (photosById[id] || []).forEach(f => {
+    if (!seen.has(f)) { seen.add(f); out.push(f); }
+  }));
+  return out;
+}
 
 
 const SUN_COLOR = 'rgb(240, 179, 35)';
@@ -1010,31 +1242,31 @@ function siteOutlineColor(site) {
   return siteColor(site);
 }
 
-// Builds a Mapbox GL 'match' expression mapping cleaned_na → site color
+// Builds a Mapbox GL 'match' expression mapping Project_Nm (uppercased) → site color
 function buildColorExpression() {
   const entries = [];
   const seen = new Set();
   propertiesGeojson.features.forEach(f => {
-    const name = f.properties.cleaned_na;
-    if (!name || seen.has(name)) return;
-    seen.add(name);
-    const site = resolveContent(name);
-    entries.push(name, site ? siteColor(site) : SUN_COLOR);
+    const id = normId(f.properties.Project_Nm);
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    const site = resolveContent(id);
+    entries.push(id, site ? siteColor(site) : SUN_COLOR);
   });
-  return entries.length ? ['match', ['get', 'cleaned_na'], ...entries, SUN_COLOR] : SUN_COLOR;
+  return entries.length ? ['match', ['upcase', ['to-string', ['get', 'Project_Nm']]], ...entries, SUN_COLOR] : SUN_COLOR;
 }
 
 function buildOutlineColorExpression() {
   const entries = [];
   const seen = new Set();
   propertiesGeojson.features.forEach(f => {
-    const name = f.properties.cleaned_na;
-    if (!name || seen.has(name)) return;
-    seen.add(name);
-    const site = resolveContent(name);
-    entries.push(name, site ? siteOutlineColor(site) : SUN_COLOR);
+    const id = normId(f.properties.Project_Nm);
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    const site = resolveContent(id);
+    entries.push(id, site ? siteOutlineColor(site) : SUN_COLOR);
   });
-  return entries.length ? ['match', ['get', 'cleaned_na'], ...entries, SUN_COLOR] : SUN_COLOR;
+  return entries.length ? ['match', ['upcase', ['to-string', ['get', 'Project_Nm']]], ...entries, SUN_COLOR] : SUN_COLOR;
 }
 
 function siteCategory(site) {
@@ -1093,7 +1325,7 @@ function resetMapView() {
 
 // ── MAP + CONTENT LOAD ──
 const mapLoadPromise = new Promise(resolve => map.on('load', resolve));
-const shpLoadPromise = shp('data/wgs84clean/cwc_wgs84_clean_nocol.zip').catch(err => {
+const shpLoadPromise = shp('data/PSU_Student_Request.zip').catch(err => {
   console.warn('Failed to load shapefile:', err);
   return null;
 });
@@ -1105,12 +1337,15 @@ let outlineColorExpr = null;
 let hoveredId = null;
 let selectedIds = [];
 
-function centroidBySfname(sfname) {
+function featureById(projectId) {
   if (!propertiesGeojson) return null;
-  const canonical = CONTENT_ALIAS[sfname] || sfname;
-  const feature = propertiesGeojson.features.find(f =>
-    f.properties.cleaned_na === canonical || f.properties.cleaned_na === sfname
-  );
+  const k = normId(projectId);
+  if (!k) return null;
+  return propertiesGeojson.features.find(f => normId(f.properties.Project_Nm) === k) || null;
+}
+
+function centroidById(projectId) {
+  const feature = featureById(projectId);
   return feature ? featureCentroid(feature.geometry) : null;
 }
 
@@ -1180,6 +1415,7 @@ function addPropertyLayers() {
 
 Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geojson]) => {
   propertiesGeojson = geojson;
+  reportDataDiscrepancies(geojson);
   colorExpr = buildColorExpression();
   outlineColorExpr = buildOutlineColorExpression();
   addPropertyLayers();
@@ -1191,9 +1427,8 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
       map.setFeatureState({ source: 'properties', id: hoveredId }, { hover: true });
     }
     map.getCanvas().style.cursor = 'pointer';
-    const sfname = e.features[0].properties.cleaned_na;
-    const site = sfname ? resolveContent(sfname) : null;
-    const label = site?.name || sfname;
+    const p = e.features[0].properties;
+    const label = p.CWC_NAME || p.Project_Nm;
     if (label) tooltip.setLngLat(e.lngLat).setText(label).addTo(map);
   });
 
@@ -1206,21 +1441,9 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
 
   map.on('click', 'properties-fill', e => {
     const p = e.features[0].properties;
-    const sfname = p.cleaned_na || p.CWC_NAME || null;
-    const editorial = sfname ? resolveContent(sfname) : null;
-    // Use editorial site object directly if found; otherwise build a fallback from shapefile props
-    const site = editorial || {
-      _key: sfname || 'unknown',
-      sfname: sfname || '',
-      name: sfname || 'CWC Property',
-      id: '',
-      protection_type: 'N/A',
-      year: p.cleaned_da || p.Year || 'N/A',
-      acreage: p.clean_acre || 'N/A',
-      county: p.cleaned_co || p.County || 'N/A',
-      township: p.cleaned_to || '',
-      description: 'No additional information available for this property.',
-    };
+    const editorial = resolveContent(p.Project_Nm);
+    // Merge editorial with shapefile props: sites.json priority, shapefile fills gaps + new fields
+    const site = mergeSiteWithProps(editorial, p);
 
     // Clear previous selection
     selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: false }));
@@ -1236,16 +1459,13 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
   // ── POLYGON LABELS ──
   permanentLabels.forEach(p => p.remove());
   permanentLabels = [];
-  labeledSfnames.forEach(sfname => {
-    const canonical = CONTENT_ALIAS[sfname] || sfname;
-    const feature = geojson.features.find(f =>
-      f.properties.cleaned_na === canonical || f.properties.cleaned_na === sfname
-    );
-    if (!feature) return;
+  labeledIds.forEach(id => {
+    const feature = geojson.features.find(f => normId(f.properties.Project_Nm) === id);
+    if (!feature) { console.warn(`[labels] labeled id "${id}" not found in shapefile Project_Nm`); return; }
     const c = featureCentroid(feature.geometry);
     if (!c) return;
-    const editorial = siteContent[sfname] || siteContent[canonical];
-    const label = editorial?.name || sfname;
+    const editorial = siteContent[id];
+    const label = editorial?.name || feature.properties.CWC_NAME || id;
 
     const popup = new mapboxgl.Popup({
       closeButton: false,
@@ -1299,7 +1519,7 @@ function renderList() {
   const filterRow = document.getElementById('filterRow');
   list.innerHTML = '';
 
-  const sites = Object.values(siteContent);
+  const sites = siteList;
 
   // Rebuild category filter pills
   const categories = [...new Set(sites.map(s => siteCategory(s)))].sort();
@@ -1334,18 +1554,20 @@ function renderList() {
     card.style.animationDelay = `${i * 0.04}s`;
     card.id = `card-${key.replace(/[\s']/g, '-')}`;
     card.onclick = () => {
-      openDetail(site);
-      const sfname = site.sfname || site.name;
-      const center = centroidBySfname(sfname);
+      const projId = normId(site.id);
+      const feature = featureById(projId);
+      openDetail(mergeSiteWithProps(site, feature?.properties));
+      const center = centroidById(projId);
 
-      // Clear previous selection and select this feature
+      // Clear previous selection and select all features matching this Project_Nm.
+      // Use array indices (matches Mapbox's generateId assignment) so selection works
+      // even for polygons outside the current viewport.
       selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: false }));
-      if (map.getSource('properties')) {
-        const canonical = CONTENT_ALIAS[sfname] || sfname;
-        const features = map.querySourceFeatures('properties', {
-          filter: ['==', ['get', 'cleaned_na'], canonical]
+      if (map.getSource('properties') && propertiesGeojson) {
+        selectedIds = [];
+        propertiesGeojson.features.forEach((f, idx) => {
+          if (normId(f.properties.Project_Nm) === projId) selectedIds.push(idx);
         });
-        selectedIds = features.map(f => f.id);
         selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: true }));
       }
 
@@ -1411,25 +1633,62 @@ function openDetail(site) {
     <div class="detail-section">
       <div class="detail-section-title">Key Facts</div>
       <div class="detail-facts">
-        <div class="detail-fact">
-          <div class="detail-fact-value">${site.acreage !== undefined && site.acreage !== 'N/A' ? site.acreage + ' ac' : 'N/A'}</div>
-          <div class="detail-fact-label">Area</div>
-        </div>
-        <div class="detail-fact">
-          <div class="detail-fact-value">${site.year || 'N/A'}</div>
-          <div class="detail-fact-label">Year Protected</div>
-        </div>
         <div class="detail-fact" style="grid-column:1/-1;">
           <div class="detail-fact-value" style="font-size:13px;font-weight:600;line-height:1.3;">${site.protection_type || 'N/A'}</div>
           <div class="detail-fact-label">Protection Type</div>
         </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value" style="font-size:15px;">${site.action || 'N/A'}</div>
+          <div class="detail-fact-label">Action</div>
+        </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value" style="font-size:15px;">${site.county || 'N/A'}</div>
+          <div class="detail-fact-label">County</div>
+        </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value">${site.year || 'N/A'}</div>
+          <div class="detail-fact-label">Year</div>
+        </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value" style="font-size:15px;">${site.access || 'N/A'}</div>
+          <div class="detail-fact-label">Access</div>
+        </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value">${site.acreage != null && site.acreage !== '' && site.acreage !== 'N/A' ? (typeof site.acreage === 'number' ? site.acreage.toFixed(2) : site.acreage) + ' ac' : 'N/A'}</div>
+          <div class="detail-fact-label">Acre</div>
+        </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value" style="font-size:15px;">${site.township || 'N/A'}</div>
+          <div class="detail-fact-label">Township</div>
+        </div>
+        <div class="detail-fact" style="grid-column:1/-1;">
+          <div class="detail-fact-value" style="font-size:15px;">${site.date || 'N/A'}</div>
+          <div class="detail-fact-label">Date</div>
+        </div>
       </div>
     </div>
 
+    <div class="detail-section">
+      <div class="detail-section-title">Photo</div>
+      ${renderPhotosHtml(site)}
+    </div>
   `;
 
   document.getElementById('sidebar').classList.remove('collapsed');
   document.getElementById('panelViews').classList.add('show-detail');
+}
+
+function renderPhotosHtml(site) {
+  const files = photosForSite(site);
+  if (!files.length) return '<div class="detail-photos-empty">No photos available for this property.</div>';
+  const tiles = files.map(f => {
+    const url = PHOTOS_DIR + encodeURIComponent(f).replace(/%2F/g, '/');
+    const alt = f.replace(/\.[^.]+$/, '');
+    return `<a class="detail-photo" href="${url}" target="_blank" rel="noopener">
+      <img loading="lazy" src="${url}" alt="${alt.replace(/"/g,'&quot;')}">
+    </a>`;
+  }).join('');
+  return `<div class="detail-photos">${tiles}</div>`;
 }
 
 function closeDetail() {
@@ -1457,9 +1716,9 @@ function showView(view) {
 }
 
 // Init — sidebar list renders once content files are loaded
-contentLoadPromise.then(() => {
+Promise.all([contentLoadPromise, photosLoadPromise]).then(() => {
   renderList();
-  const sites = Object.values(siteContent);
+  const sites = siteList;
   document.getElementById('statSites').textContent = sites.length;
   const counties = new Set(
     sites.flatMap(s => (s.county || '').split(',').map(c => c.trim()).filter(Boolean))
