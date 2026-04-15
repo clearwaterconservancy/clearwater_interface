@@ -641,6 +641,27 @@
     pointer-events: none;
   }
 
+  /* ── HQ MARKER ── */
+  .hq-marker {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgb(72, 159, 223);
+    border: 2px solid rgba(255,255,255,0.9);
+    box-shadow: 0 0 12px rgba(72,159,223,0.8), 0 2px 8px rgba(0,0,0,0.3);
+    pointer-events: none;
+  }
+
+  .site-card.no-click {
+    cursor: default;
+  }
+
+  .site-card.no-click:hover {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
   /* ── ACTIVE SITE LABEL ── */
   .site-active-label {
     font-family: var(--fonthg);
@@ -1230,6 +1251,7 @@ const SUN_COLOR = 'rgb(240, 179, 35)';
 
 function siteColor(site) {
   const id = (site.id || '').split('_')[0];
+  if (id.startsWith('HQ')) return 'rgb(72, 159, 223)';                           // azure  – headquarters
   if (id.startsWith('CE') || id.startsWith('Acc')) return 'rgb(72, 159, 223)';  // azure  – easements
   if (id.startsWith('Fee')) return 'rgb(239, 237, 234)';                          // sand   – owned
   if (id.startsWith('Fac')) return 'rgb(240, 179, 35)';                          // sun    – facilitated
@@ -1271,6 +1293,7 @@ function buildOutlineColorExpression() {
 
 function siteCategory(site) {
   const id = (site.id || '').split('_')[0];
+  if (id.startsWith('HQ')) return 'Headquarters';
   if (id.startsWith('CE') || id.startsWith('Acc')) return 'Easement';
   if (id.startsWith('Fee')) return 'Owned';
   if (id.startsWith('Fac')) return 'Facilitated';
@@ -1320,7 +1343,7 @@ function setMapStyle(styleKey, btn) {
 }
 
 function resetMapView() {
-  map.flyTo({ center: [-77.8479000421826, 40.84578083510945], zoom: 12, pitch: 60, duration: 800 });
+  map.easeTo({ center: [-77.92143828422854, 40.81218179517771], zoom: 12, pitch: 60, duration: 800 });
 }
 
 // ── MAP + CONTENT LOAD ──
@@ -1453,7 +1476,7 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
     openDetail(site);
     const centroid = featureCentroid(e.features[0].geometry) || [e.lngLat.lng, e.lngLat.lat];
     showActiveLabel(site.name, centroid);
-    map.flyTo({ center: centroid, duration: 800, zoom: 12.6 });
+    map.easeTo({ center: centroid, duration: 800, zoom: 12.6 });
   });
 
   // ── POLYGON LABELS ──
@@ -1478,6 +1501,30 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
       .setText(label)
       .addTo(map);
     permanentLabels.push(popup);
+  });
+
+  // ── POINT-ONLY SITES (HQ, etc.) ──
+  siteList.filter(s => s.coordinates && s.clickable === false).forEach(s => {
+    const markerEl = document.createElement('div');
+    markerEl.className = 'hq-marker';
+    const ptMarker = new mapboxgl.Marker({ element: markerEl, anchor: 'center' })
+      .setLngLat(s.coordinates)
+      .addTo(map);
+    permanentLabels.push(ptMarker);  // hides/restores with other labels on site select
+
+    if (labeledIds.includes(normId(s.id))) {
+      const ptPopup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        anchor: 'bottom',
+        className: 'site-label-popup',
+        maxWidth: 'none'
+      })
+        .setLngLat(s.coordinates)
+        .setText(s.name)
+        .addTo(map);
+      permanentLabels.push(ptPopup);  // hides/restores with other labels on site select
+    }
   });
 
   renderList();
@@ -1549,33 +1596,36 @@ function renderList() {
   filtered.forEach((site, i) => {
     const color = siteColor(site);
     const key = site._key;
+    const isClickable = site.clickable !== false;
     const card = document.createElement('div');
-    card.className = 'site-card' + (activeSiteName === key ? ' active' : '');
+    card.className = 'site-card' + (activeSiteName === key ? ' active' : '') + (isClickable ? '' : ' no-click');
     card.style.animationDelay = `${i * 0.04}s`;
     card.id = `card-${key.replace(/[\s']/g, '-')}`;
-    card.onclick = () => {
-      const projId = normId(site.id);
-      const feature = featureById(projId);
-      openDetail(mergeSiteWithProps(site, feature?.properties));
-      const center = centroidById(projId);
+    if (isClickable) {
+      card.onclick = () => {
+        const projId = normId(site.id);
+        const feature = featureById(projId);
+        openDetail(mergeSiteWithProps(site, feature?.properties));
+        const center = centroidById(projId);
 
-      // Clear previous selection and select all features matching this Project_Nm.
-      // Use array indices (matches Mapbox's generateId assignment) so selection works
-      // even for polygons outside the current viewport.
-      selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: false }));
-      if (map.getSource('properties') && propertiesGeojson) {
-        selectedIds = [];
-        propertiesGeojson.features.forEach((f, idx) => {
-          if (normId(f.properties.Project_Nm) === projId) selectedIds.push(idx);
-        });
-        selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: true }));
-      }
+        // Clear previous selection and select all features matching this Project_Nm.
+        // Use array indices (matches Mapbox's generateId assignment) so selection works
+        // even for polygons outside the current viewport.
+        selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: false }));
+        if (map.getSource('properties') && propertiesGeojson) {
+          selectedIds = [];
+          propertiesGeojson.features.forEach((f, idx) => {
+            if (normId(f.properties.Project_Nm) === projId) selectedIds.push(idx);
+          });
+          selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: true }));
+        }
 
-      if (center) {
-        showActiveLabel(site.name, center);
-        map.flyTo({ center, zoom: 12.6, duration: 800 });
-      }
-    };
+        if (center) {
+          showActiveLabel(site.name, center);
+          map.easeTo({ center, zoom: 12.6, duration: 800 });
+        }
+      };
+    }
     card.innerHTML = `
       <div class="site-dot" style="background:${color};color:${color}"></div>
       <div class="site-card-body">
@@ -1718,7 +1768,7 @@ function showView(view) {
 // Init — sidebar list renders once content files are loaded
 Promise.all([contentLoadPromise, photosLoadPromise]).then(() => {
   renderList();
-  const sites = siteList;
+  const sites = siteList.filter(s => s.clickable !== false);
   document.getElementById('statSites').textContent = sites.length;
   const counties = new Set(
     sites.flatMap(s => (s.county || '').split(',').map(c => c.trim()).filter(Boolean))

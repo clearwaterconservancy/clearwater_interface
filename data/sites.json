@@ -1,8 +1,9 @@
 {
   "labeled": [
-    "CE024", 
-    "CE015", 
-    "CE004"
+    "CE024",
+    "CE015",
+    "CE004",
+    "HQ001"
   ],
   "aliases": {
     "Rockview - PFBC": "Rockview - PAGC",
@@ -10,6 +11,16 @@
     "Rockview - Benner Twp": "Rockview - PAGC"
   },
   "sites": [
+    {
+      "id": "HQ001",
+      "name": "ClearWater Conservancy Headquarters",
+      "protection_type": "Headquarters",
+      "coordinates": [-77.92143828422854, 40.81218179517771],
+      "county": "Centre",
+      "township": "State College",
+      "description": "Administrative headquarters of ClearWater Conservancy, serving as the organizational hub for land conservation across central Pennsylvania.",
+      "clickable": false
+    },
     {
       "id": "CE001",
       "name": "Rhoneymeade",
