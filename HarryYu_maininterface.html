@@ -134,7 +134,7 @@
     }
 
     .sidebar.collapsed {
-      transform: translateY(calc(100% - 44px)) !important;
+      transform: translateY(calc(100% - 100px)) !important;
     }
 
     .sidebar-tab {
@@ -144,7 +144,7 @@
       left: 0 !important;
       transform: none !important;
       width: 100% !important;
-      height: 44px !important;
+      height: 55px !important;
       border-radius: 14px 14px 0 0 !important;
       border: none !important;
       border-bottom: 1px solid var(--border) !important;
@@ -159,19 +159,19 @@
       left: 50%;
       transform: translateX(-50%);
       width: 36px;
-      height: 4px;
+      height: 1px;
       background: rgba(255,255,255,0.25);
       border-radius: 2px;
     }
 
     /* Arrow points up when collapsed (tap to expand) */
     .sidebar.collapsed .sidebar-tab .tab-arrow {
-      transform: rotate(-90deg) !important;
+      transform: rotate(90deg) !important;
     }
 
     /* Arrow points down when expanded (tap to collapse) */
     .sidebar-tab .tab-arrow {
-      transform: rotate(90deg) !important;
+      transform: rotate(-90deg) !important;
     }
   }
 
@@ -233,28 +233,21 @@
   }
 
   .sidebar-header {
-    padding: 32px 28px 20px;
+    padding: 15px 30px 15px;
     border-bottom: 1px solid var(--border);
   }
 
-  .sidebar-header h1 {
+  .sidebar-header h2 {
     font-family: var(--fonthg);
-    font-size: 32px;
+    font-size: 25px;
     font-weight: 400;
-    line-height: 1.15;
-    margin-bottom: 6px;
-  }
-
-  .sidebar-header .subtitle {
-    font-size: 14px;
-    color: var(--text-secondary);
-    letter-spacing: 0.02em;
+    line-height: 1.2;
+    margin: 0 0 10px;
   }
 
   .sidebar-header .stat-row {
     display: flex;
     gap: 24px;
-    margin-top: 18px;
   }
 
   .stat {
@@ -263,7 +256,7 @@
   }
 
   .stat-value {
-    font-size: 28px;
+    font-size: 20px;
     font-weight: 700;
     color: var(--accent);
     line-height: 1;
@@ -286,10 +279,10 @@
   .search-input {
     width: 100%;
     padding: 10px 14px 10px 38px;
-    background: var(--bg-card);
+    background: rgba(227, 227, 227);
     border: 1px solid var(--border);
     border-radius: 8px;
-    color: var(--text-primary);
+    color: rgba(0, 0, 0);
     font-size: 14px;
     font-family: var(--fonthg);
     outline: none;
@@ -299,7 +292,7 @@
     background-position: 12px center;
   }
 
-  .search-input::placeholder { color: var(--text-muted); }
+  .search-input::placeholder { color: rgba(0, 0, 0, 0.2); }
   .search-input:focus { border-color: var(--accent-dim); }
 
   /* ── SITE LIST ── */
@@ -414,11 +407,26 @@
     border-top-color: rgba(0, 20, 35, 0.88);
   }
 
-  /* Mapbox logo — center bottom */
-  .mapboxgl-ctrl-bottom-left {
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    bottom: 0 !important;
+  /* HQ label popup — mirrors site-label-popup */
+  .hq-label-popup .mapboxgl-popup-content {
+    background: rgba(0, 20, 35, 0.88);
+    color: var(--text-primary);
+    font-family: var(--fonthg);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid rgba(240, 179, 35, 0.5);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .hq-label-popup .mapboxgl-popup-tip {
+    border-top-color: rgba(0, 20, 35, 0.88);
+  }
+  .hq-label-popup.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+    border-top-color: rgba(0, 20, 35, 0.88);
   }
 
   /* Mapbox overrides */
@@ -440,6 +448,21 @@
   .mapboxgl-ctrl-group button + button {
     border-top: 1px solid var(--border) !important;
   }
+
+  /* Lift zoom buttons 50px above the Mapbox logo/attribution */
+  .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-group {
+    transform: translateY(-50px);
+  }
+
+  /* Pin Mapbox logo to viewport bottom-right so panels can't cover it */
+  .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl:has(> .mapboxgl-ctrl-logo) {
+    position: fixed !important;
+    right: 3px !important;
+    bottom: 37px !important;
+    margin: 0 !important;
+    z-index: 10000 !important;
+  }
+
 
   /* ── DETAIL PANEL ── */
 
@@ -843,6 +866,45 @@
     margin: 8px 0;
   }
 
+  /* ── LEGEND TOGGLE BUTTON (mobile only) ── */
+  .legend-toggle-btn {
+    display: none;
+  }
+
+  @media (max-width: 768px) {
+    .legend-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      position: absolute;
+      top: 62px;
+      right: 14px;
+      z-index: 401;
+      background: var(--bg-panel-trans);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+      color: var(--text-primary);
+      font-family: var(--fonthg);
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+    }
+
+    .map-legend {
+      top: 104px;
+      right: 14px;
+      display: none;
+    }
+
+    .map-legend.legend-open {
+      display: block;
+    }
+  }
 
   /* ── SIDEBAR TAB ── */
   .sidebar-tab {
@@ -911,8 +973,7 @@
         <!-- CATALOG VIEW -->
         <div class="panel-catalog">
           <div class="sidebar-header">
-            <h1>Clearwater Conservancy</h1>
-            <div class="subtitle">Central Pennsylvania Region</div>
+            <h2>Central Pennsylvania Region</h2>
             <div class="stat-row">
               <div class="stat">
                 <div class="stat-value" id="statSites">—</div>
@@ -966,7 +1027,16 @@
         <button class="map-style-btn" id="styleBtnSatellite" onclick="setMapStyle('satellite', this)">Satellite</button>
       </div>
     </div>
-    <div class="map-legend">
+    <button class="legend-toggle-btn" id="legendToggleBtn" onclick="toggleLegend(event)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+        <rect x="1" y="1" width="5" height="5" rx="1"/>
+        <rect x="1" y="10" width="5" height="5" rx="1"/>
+        <line x1="9" y1="3.5" x2="15" y2="3.5"/>
+        <line x1="9" y1="12.5" x2="15" y2="12.5"/>
+      </svg>
+      Legend
+    </button>
+    <div class="map-legend" id="mapLegend">
       <div class="legend-title">Legend</div>
 
       <div class="legend-section-label">CWC Properties</div>
@@ -1017,6 +1087,21 @@
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.js"></script>
 <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
 <script>
+// ── LEGEND TOGGLE (mobile) ──
+function toggleLegend(e) {
+  e.stopPropagation();
+  document.getElementById('mapLegend').classList.toggle('legend-open');
+}
+
+document.addEventListener('click', function(e) {
+  const legend = document.getElementById('mapLegend');
+  const btn = document.getElementById('legendToggleBtn');
+  if (legend && legend.classList.contains('legend-open') &&
+      !legend.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+    legend.classList.remove('legend-open');
+  }
+});
+
 // ── EDITORIAL CONTENT ──
 
 // All configured from data/sites.json.
@@ -1318,6 +1403,7 @@ const map = new mapboxgl.Map({
   center: [-77.92143828422854, 40.81218179517771],
   zoom: 12,
   pitch: 65,
+  logoPosition: 'bottom-right',
   maxBounds: [
     [-78.75, 40.15],  // SW corner — west of Blair/Clearfield, south of Huntingdon
     [-77.10, 41.45]   // NE corner — east of Mifflin, north of Clearfield
@@ -1517,7 +1603,7 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
         closeButton: false,
         closeOnClick: false,
         anchor: 'bottom',
-        className: 'site-label-popup',
+        className: 'hq-label-popup',
         maxWidth: 'none'
       })
         .setLngLat(s.coordinates)
@@ -1569,7 +1655,7 @@ function renderList() {
   const sites = siteList;
 
   // Rebuild category filter pills
-  const categories = [...new Set(sites.map(s => siteCategory(s)))].sort();
+  const categories = [...new Set(sites.map(s => siteCategory(s)))].filter(c => c !== 'Headquarters').sort();
   [...filterRow.querySelectorAll('[data-filter]:not([data-filter="all"])')].forEach(p => p.remove());
   categories.forEach(cat => {
     const pill = document.createElement('button');

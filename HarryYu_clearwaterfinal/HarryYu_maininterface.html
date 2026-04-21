@@ -1,0 +1,1781 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clearwater Conservancy</title>
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.css" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Host+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg-deep: var(--navy);
+    --bg-panel: rgba(0, 79, 113, 0.9);
+    --bg-panel-trans: rgba(0, 61, 76, 0.6);
+    --bg-card: var(--forest);
+    --bg-card-hover: rgba(0, 87, 63, 0.85);
+    --accent: var(--azure);
+    --accent-dim: var(--meadow);
+    --accent-glow: rgba(72, 159, 223, 0.15);
+    --text-primary: var(--sand);
+    --text-secondary: var(--sky);
+    --text-muted: rgba(217, 235, 249, 0.55);
+    --border: rgba(72, 159, 223, 0.2);
+    --border-strong: rgba(72, 159, 223, 0.4);
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+    --navy: rgb(0, 61, 76); 
+    --midnight: rgb(0, 79, 113);
+    --azure: rgb(72, 159, 223);
+    --sky: rgb(217, 235, 249);
+    --forest: rgb(0, 87, 63);
+    --meadow: rgb(91, 167, 94);
+    --sun: rgb(240, 179, 35);
+    --sand: rgb(239, 237, 234);
+    --fonthg: 'Host Grotesk', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: var(--fonthg);
+    background: var(--navy);
+    color: var(--sand);
+    overflow: hidden;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ── NAV ── */
+  .top-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 32px 0 17px;
+    height: 60px;
+    background: var(--navy);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 20px;
+  }
+
+  .nav-link {
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.2s;
+    cursor: pointer;
+    border: none;
+    background: none;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+
+  .nav-link:hover, .nav-link.active {
+    color: var(--accent);
+    background: var(--accent-glow);
+  }
+
+  /* ── LAYOUT ── */
+  .app {
+    display: flex;
+    height: 100vh;
+    padding-top: 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    position: absolute;
+    left: 0;
+    top: 60px;
+    height: calc(100% - 60px);
+    width: calc(100vw / 5);
+    background: var(--bg-panel);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    z-index: 500;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .sidebar.collapsed {
+    transform: translateX(-100%);
+  }
+
+  /* ── SIDEBAR MOBILE (bottom sheet) ── */
+  @media (max-width: 768px) {
+    .sidebar {
+      top: auto !important;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100% !important;
+      height: 65vh;
+      border-right: none;
+      border-top: 1px solid var(--border);
+      border-radius: 14px 14px 0 0;
+      transform: translateY(0);
+    }
+
+    .sidebar.collapsed {
+      transform: translateY(calc(100% - 44px)) !important;
+    }
+
+    .sidebar-tab {
+      position: relative !important;
+      right: auto !important;
+      top: 0 !important;
+      left: 0 !important;
+      transform: none !important;
+      width: 100% !important;
+      height: 44px !important;
+      border-radius: 14px 14px 0 0 !important;
+      border: none !important;
+      border-bottom: 1px solid var(--border) !important;
+      box-shadow: none !important;
+      flex-shrink: 0;
+    }
+
+    .sidebar-tab::before {
+      content: '';
+      position: absolute;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 36px;
+      height: 4px;
+      background: rgba(255,255,255,0.25);
+      border-radius: 2px;
+    }
+
+    /* Arrow points up when collapsed (tap to expand) */
+    .sidebar.collapsed .sidebar-tab .tab-arrow {
+      transform: rotate(-90deg) !important;
+    }
+
+    /* Arrow points down when expanded (tap to collapse) */
+    .sidebar-tab .tab-arrow {
+      transform: rotate(90deg) !important;
+    }
+  }
+
+  /* ── PANEL VIEWPORT & SLIDING VIEWS ── */
+  .panel-viewport {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel-views {
+    display: flex;
+    flex-direction: row;
+    width: 200%;
+    height: 100%;
+    transform: translateX(0);
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .panel-views.show-detail {
+    transform: translateX(-50%);
+  }
+
+  .panel-catalog,
+  .panel-detail {
+    width: 50%;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .detail-back-bar {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .detail-back-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-family: var(--fonthg);
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+  }
+
+  .detail-back-btn:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+  }
+
+  .sidebar-header {
+    padding: 32px 28px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-header h1 {
+    font-family: var(--fonthg);
+    font-size: 32px;
+    font-weight: 400;
+    line-height: 1.15;
+    margin-bottom: 6px;
+  }
+
+  .sidebar-header .subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+  }
+
+  .sidebar-header .stat-row {
+    display: flex;
+    gap: 24px;
+    margin-top: 18px;
+  }
+
+  .stat {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+
+  /* ── SEARCH ── */
+  .search-bar {
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 10px 14px 10px 38px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: var(--fonthg);
+    outline: none;
+    transition: border-color 0.2s;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%235a7a68' viewBox='0 0 24 24'%3E%3Cpath d='M21 21l-4.35-4.35M11 19a8 8 0 100-16 8 8 0 000 16z' stroke='%235a7a68' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: 12px center;
+  }
+
+  .search-input::placeholder { color: var(--text-muted); }
+  .search-input:focus { border-color: var(--accent-dim); }
+
+  /* ── SITE LIST ── */
+  .site-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-dim) transparent;
+  }
+
+  .site-list::-webkit-scrollbar { width: 5px; }
+  .site-list::-webkit-scrollbar-thumb { background: var(--accent-dim); border-radius: 4px; }
+
+  .site-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 16px;
+    margin-bottom: 4px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.25s;
+    border: 1px solid transparent;
+    position: relative;
+  }
+
+  .site-card:hover {
+    background: var(--bg-card);
+    border-color: var(--border);
+  }
+
+  .site-card.active {
+    background: var(--bg-card-hover);
+    border-color: var(--border-strong);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+
+  .site-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px currentColor;
+  }
+
+  .site-card-body { flex: 1; }
+
+  .site-card-name {
+    font-weight: 600;
+    font-size: 15px;
+    margin-bottom: 3px;
+  }
+
+  .site-card-type {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+
+  .site-card-desc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.45;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .site-card-coords {
+    font-size: 11px;
+    font-family: var(--fonthg);
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  /* ── MAP ── */
+  .map-container {
+    flex: 1;
+    position: relative;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Site label popups */
+  .site-label-popup .mapboxgl-popup-content {
+    background: rgba(0, 20, 35, 0.88);
+    color: var(--text-primary);
+    font-family: var(--fonthg);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid rgba(240, 179, 35, 0.5);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .site-label-popup .mapboxgl-popup-tip {
+    border-top-color: rgba(0, 20, 35, 0.88);
+  }
+  .site-label-popup.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
+    border-top-color: rgba(0, 20, 35, 0.88);
+  }
+
+  /* Mapbox logo — center bottom */
+  .mapboxgl-ctrl-bottom-left {
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    bottom: 0 !important;
+  }
+
+  /* Mapbox overrides */
+  .mapboxgl-ctrl-group {
+    background: var(--bg-panel) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: var(--shadow) !important;
+  }
+  .mapboxgl-ctrl-group button {
+    background: transparent !important;
+    color: var(--accent) !important;
+  }
+  .mapboxgl-ctrl-group button:hover {
+    background: var(--bg-card) !important;
+  }
+  .mapboxgl-ctrl-group button .mapboxgl-ctrl-icon {
+    background-color: white !important;
+  }
+  .mapboxgl-ctrl-group button + button {
+    border-top: 1px solid var(--border) !important;
+  }
+
+  /* ── DETAIL PANEL ── */
+
+  .detail-header {
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .detail-type-badge {
+    display: inline-block;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 5px;
+    font-weight: 600;
+  }
+
+  .detail-title {
+    font-family: var(--fonthg);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1.2;
+  }
+
+  .detail-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255);
+  }
+
+  .detail-coords {
+    font-family: var(--fonthg);
+    font-size: 13px;
+    color: rgba(255,255,255);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .detail-coords svg {
+    width: 14px; height: 14px;
+    stroke: var(--accent-dim);
+  }
+
+  .detail-section {
+    margin-bottom: 24px;
+  }
+
+  .detail-section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .detail-section p {
+    font-size: 14px;
+    line-height: 1.65;
+    color: var(--text-secondary);
+  }
+
+  .detail-facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .detail-fact {
+    background: var(--bg-card);
+    border-radius: 8px;
+    padding: 14px;
+    border: 1px solid var(--border);
+  }
+
+  .detail-fact-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 2px;
+  }
+
+  .detail-fact-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+  }
+
+  .detail-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .detail-tag {
+    font-size: 12px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    background: var(--bg-card);
+  }
+
+  .detail-photos {
+    display: block;
+  }
+  .detail-photo {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    cursor: zoom-in;
+  }
+  .detail-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+  }
+  .detail-photo:hover img { transform: scale(1.04); }
+  .detail-photos-empty {
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* ── CUSTOM MARKERS ── */
+  .custom-marker {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,0.8);
+    box-shadow: 0 0 12px currentColor, 0 2px 8px rgba(0,0,0,0.3);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+  }
+
+  .custom-marker:hover {
+    transform: scale(1.4);
+    box-shadow: 0 0 20px currentColor, 0 2px 12px rgba(0,0,0,0.4);
+  }
+
+  .custom-marker.active-marker {
+    transform: scale(1.6);
+    box-shadow: 0 0 24px currentColor, 0 0 48px currentColor;
+  }
+
+  /* ── SITE LABELS ── */
+  .site-label {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-strong);
+    color: var(--text-primary);
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+    font-family: var(--fonthg);
+    user-select: none;
+    pointer-events: auto;
+  }
+
+  .site-label:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* ── SUB-POINT LABELS ── */
+  .sub-label {
+    background: var(--bg-panel-trans);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    white-space: nowrap;
+    letter-spacing: 0.02em;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.4);
+    font-family: var(--fonthg);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* ── HQ MARKER ── */
+  .hq-marker {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgb(72, 159, 223);
+    border: 2px solid rgba(255,255,255,0.9);
+    box-shadow: 0 0 12px rgba(72,159,223,0.8), 0 2px 8px rgba(0,0,0,0.3);
+    pointer-events: none;
+  }
+
+  .site-card.no-click {
+    cursor: default;
+  }
+
+  .site-card.no-click:hover {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+
+  /* ── ACTIVE SITE LABEL ── */
+  .site-active-label {
+    font-family: var(--fonthg);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--sky);
+    text-shadow: 0 1px 6px rgba(0,0,0,0.95), 0 0 16px rgba(0,0,0,0.7);
+    white-space: nowrap;
+    letter-spacing: 0.03em;
+    pointer-events: none;
+    padding-bottom: 6px;
+  }
+
+  /* ── TOOLTIP ── */
+  .map-tooltip .mapboxgl-popup-content {
+    background: var(--bg-panel);
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-family: var(--fonthg);
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: var(--shadow);
+  }
+
+  .map-tooltip .mapboxgl-popup-tip {
+    border-top-color: var(--border-strong);
+  }
+
+  /* ── FILTER PILLS ── */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    padding: 12px 28px;
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+  }
+
+  .filter-pill {
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--fonthg);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 500;
+  }
+
+  .filter-pill:hover { border-color: var(--accent-dim); color: var(--text-primary); }
+
+  .filter-pill.active {
+    background: var(--accent);
+    color: var(--bg-deep);
+    border-color: var(--accent);
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .site-card {
+    animation: fadeInUp 0.35s ease both;
+  }
+
+  /* ── MAP STYLE TOGGLE ── */
+  .map-style-toggle {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 400;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .map-style-group {
+    display: flex;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-strong);
+    box-shadow: var(--shadow);
+  }
+
+  .map-style-btn {
+    padding: 7px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    font-family: var(--fonthg);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    background: var(--bg-panel);
+    color: var(--text-muted);
+    border: none;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+
+  .map-style-btn + .map-style-btn {
+    border-left: 1px solid var(--border);
+  }
+
+  .map-style-btn:hover {
+    background: var(--bg-card);
+    color: var(--text-primary);
+  }
+
+  .map-style-btn.active {
+    background: var(--accent);
+    color: var(--navy);
+  }
+
+  /* ── MAP LEGEND ── */
+  .map-legend {
+    position: absolute;
+    top: 60px;
+    right: 14px;
+    z-index: 400;
+    background: var(--bg-panel-trans);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    min-width: 180px;
+    box-shadow: var(--shadow);
+  }
+
+  .legend-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,255,0.55);
+    margin-bottom: 9px;
+  }
+
+  .legend-section-label {
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: rgba(255,255,255,0.35);
+    margin: 8px 0 5px;
+  }
+
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 5px;
+  }
+
+  .legend-item:last-child { margin-bottom: 0; }
+
+  .legend-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+    flex-shrink: 0;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .legend-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.8);
+    font-family: var(--fonthg);
+  }
+
+  .legend-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.12);
+    margin: 8px 0;
+  }
+
+
+  /* ── SIDEBAR TAB ── */
+  .sidebar-tab {
+    position: absolute;
+    right: -26px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 85px;
+    background: var(--bg-panel);
+    border: 1px solid var(--border-strong);
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 4px 0 12px rgba(0,0,0,0.3);
+    transition: background 0.2s, border-color 0.2s, color 0.2s;
+    z-index: 10;
+  }
+
+  .sidebar-tab:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .sidebar-tab .tab-arrow {
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Arrow points right (expand) when collapsed */
+  .sidebar.collapsed .sidebar-tab .tab-arrow {
+    transform: rotate(180deg);
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="top-bar">
+  <div class="logo">
+    <img src = 'logos/HarryYu_cwc_logo_long_reverse.svg' alt = "Clearwater Conservancy" height = "40">
+  </div>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showView('map')">Map</button>
+    <a class="nav-link" href="https://www.clearwaterconservancy.org/" target="_blank" rel="noopener">Main Website</a>
+  </div>
+</div>
+
+<!-- APP -->
+<div class="app">
+  <!-- SIDEBAR -->
+  <div class="sidebar collapsed" id="sidebar">
+    <button class="sidebar-tab" onclick="toggleSidebar()" title="Toggle site list">
+      <svg class="tab-arrow" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+      </svg>
+    </button>
+
+    <div class="panel-viewport">
+      <div class="panel-views" id="panelViews">
+
+        <!-- CATALOG VIEW -->
+        <div class="panel-catalog">
+          <div class="sidebar-header">
+            <h1>Clearwater Conservancy</h1>
+            <div class="subtitle">Central Pennsylvania Region</div>
+            <div class="stat-row">
+              <div class="stat">
+                <div class="stat-value" id="statSites">—</div>
+                <div class="stat-label">Sites</div>
+              </div>
+              <div class="stat">
+                <div class="stat-value" id="statCounties">—</div>
+                <div class="stat-label">Counties</div>
+              </div>
+            </div>
+          </div>
+          <div class="search-bar">
+            <input type="text" class="search-input" placeholder="Search sites..." id="searchInput" oninput="filterSites()">
+          </div>
+          <div class="filter-row" id="filterRow">
+            <button class="filter-pill active" data-filter="all" onclick="setFilter('all', this)">All</button>
+          </div>
+          <div class="site-list" id="siteList"></div>
+        </div>
+
+        <!-- DETAIL VIEW -->
+        <div class="panel-detail">
+          <div class="detail-back-bar">
+            <button class="detail-back-btn" id="detailBackBtn" type="button">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="15 18 9 12 15 6"/>
+              </svg>
+              Back to Sites
+            </button>
+          </div>
+          <div class="detail-header">
+            <div class="detail-type-badge" id="detailBadge"></div>
+            <div class="detail-title" id="detailTitle"></div>
+          </div>
+          <div class="detail-body" id="detailBody"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="map-container">
+    <div id="map"></div>
+    <div class="map-style-toggle">
+      <div class="map-style-group">
+        <button class="map-style-btn" onclick="resetMapView()">Reset</button>
+      </div>
+      <div class="map-style-group">
+        <button class="map-style-btn active" id="styleBtnVector" onclick="setMapStyle('vector', this)">Vector</button>
+        <button class="map-style-btn" id="styleBtnSatellite" onclick="setMapStyle('satellite', this)">Satellite</button>
+      </div>
+    </div>
+    <div class="map-legend">
+      <div class="legend-title">Legend</div>
+
+      <div class="legend-section-label">CWC Properties</div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: rgb(72,159,223);"></div>
+        <span class="legend-label">Conservation Easement</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: rgb(239,237,234); border-color: #8431d6;"></div>
+        <span class="legend-label">ClearWater Owned</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: rgb(240,179,35);"></div>
+        <span class="legend-label">Facilitated</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: rgba(0,0,0,0.2); border-color: #ffffff;"></div>
+        <span class="legend-label">Selected</span>
+      </div>
+
+      <hr class="legend-divider">
+
+      <div class="legend-section-label">Public Lands</div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: #3a5c30;"></div>
+        <span class="legend-label">State Game Lands</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: #7aaa65;"></div>
+        <span class="legend-label">National / State Parks</span>
+      </div>
+
+      <hr class="legend-divider">
+
+      <div class="legend-section-label">Basemap</div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: #24afff;"></div>
+        <span class="legend-label">Water</span>
+      </div>
+      <div class="legend-item">
+        <div class="legend-swatch" style="background: #b1dea6;"></div>
+        <span class="legend-label">Vegetation</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.js"></script>
+<script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
+<script>
+// ── EDITORIAL CONTENT ──
+
+// All configured from data/sites.json.
+// siteContent is keyed by UPPERCASED id (e.g. "CE023"); matching to shapefile uses Project_Nm.
+// A site may register under multiple ids (e.g. compound id "Fac005_006_007" → FAC005, FAC006, FAC007).
+let labeledIds = [];
+const siteContent = {}; // id → site object (may be shared across multiple keys)
+const siteList = [];    // unique site objects (for list/filter rendering)
+
+// Normalize a single shapefile id (e.g. "ce001" → "CE001"). Returns '' for unusable input.
+const normId = v => {
+  if (v == null) return '';
+  const m = String(v).match(/[A-Za-z]+\d+/);
+  return m ? m[0].toUpperCase() : '';
+};
+
+// Expand a (possibly compound) sites.json id field into the full list of effective ids.
+//   "CE001"              → ["CE001"]
+//   "CE024_Fac011"       → ["CE024", "FAC011"]     // distinct prefixes
+//   "Fac005_006_007"     → ["FAC005", "FAC006", "FAC007"]  // trailing digits reuse previous prefix
+//   "CE029_Acc001_Acc002"→ ["CE029", "ACC001", "ACC002"]
+function expandIds(raw) {
+  if (!raw) return [];
+  const out = [];
+  let prefix = '';
+  for (const tok of String(raw).split('_').map(t => t.trim()).filter(Boolean)) {
+    const m = tok.match(/^([A-Za-z]+)(\d+)$/);
+    if (m) {
+      prefix = m[1];
+      out.push((prefix + m[2]).toUpperCase());
+    } else if (/^\d+$/.test(tok) && prefix) {
+      out.push((prefix + tok).toUpperCase());
+    } else {
+      console.warn(`[sites.json] unparseable id token "${tok}" in "${raw}"`);
+    }
+  }
+  return out;
+}
+
+function resolveContent(projectId) {
+  const k = normId(projectId);
+  return k ? (siteContent[k] || null) : null;
+}
+
+// Merge editorial (sites.json) with shapefile props.
+// sites.json wins on overlap; shapefile fills gaps and contributes shapefile-only fields.
+function mergeSiteWithProps(editorial, p) {
+  p = p || {};
+  const base = editorial || {};
+  const shpAcre = p.GIS_Acres != null && p.GIS_Acres !== '' ? p.GIS_Acres
+                : p.Proj_Acres != null && p.Proj_Acres !== '' ? p.Proj_Acres
+                : null;
+  return {
+    _key: normId(base.id || p.Project_Nm) || (p.CWC_NAME || 'unknown'),
+    sfname: base.sfname || p.CWC_NAME || '',
+    name: base.name || p.CWC_NAME || 'CWC Property',
+    id: base.id || p.Project_Nm || '',
+    description: base.description || 'No additional information available for this property.',
+    protection_type: base.protection_type || 'N/A',
+    year: base.year != null && base.year !== '' ? base.year : (p.Year || 'N/A'),
+    county: base.county || p.County || 'N/A',
+    township: base.township || p.Township || '',
+    acreage: base.acreage != null && base.acreage !== '' ? base.acreage : (shpAcre != null ? shpAcre : 'N/A'),
+    action: p.Action || 'N/A',
+    access: p.Access || 'N/A',
+    date: p.Date || 'N/A',
+  };
+}
+
+// Compare overlapping fields between sites.json and the shapefile; log any differences.
+function reportDataDiscrepancies(geojson) {
+  if (!geojson || !geojson.features) return;
+  const normTxt = v => (v == null ? '' : String(v)).trim().toLowerCase();
+  const normTown = v => normTxt(v).replace(/\s*(township|twp\.?)\s*$/i, '').trim();
+  const parseNum = v => {
+    if (v == null || v === '') return NaN;
+    const n = parseFloat(String(v).replace(/,/g, ''));
+    return isNaN(n) ? NaN : n;
+  };
+
+  const diffs = [];
+  const matchedIds = new Set();
+  const unmatchedFeatures = [];
+  geojson.features.forEach(f => {
+    const p = f.properties || {};
+    const projId = p.Project_Nm;
+    if (!projId) return;
+    const editorial = resolveContent(projId);
+    if (!editorial) { unmatchedFeatures.push({ projId, name: p.CWC_NAME }); return; }
+    matchedIds.add(normId(projId));
+
+    const fieldDiffs = [];
+
+    // name: editorial.name vs shapefile CWC_NAME
+    if (editorial.name && p.CWC_NAME
+        && normTxt(editorial.name) !== normTxt(p.CWC_NAME)
+        && normTxt(editorial.sfname) !== normTxt(p.CWC_NAME)) {
+      fieldDiffs.push({ field: 'name', sitesJson: editorial.name, shapefile: p.CWC_NAME });
+    }
+    // year
+    if (editorial.year != null && p.Year != null
+        && normTxt(editorial.year) !== normTxt(p.Year)) {
+      fieldDiffs.push({ field: 'year', sitesJson: editorial.year, shapefile: p.Year });
+    }
+    // county
+    if (editorial.county && p.County
+        && normTxt(editorial.county) !== normTxt(p.County)) {
+      fieldDiffs.push({ field: 'county', sitesJson: editorial.county, shapefile: p.County });
+    }
+    // township (strip "Twp"/"Township" suffix on shapefile side before comparing)
+    if (editorial.township && p.Township
+        && normTown(editorial.township) !== normTown(p.Township)) {
+      fieldDiffs.push({ field: 'township', sitesJson: editorial.township, shapefile: p.Township });
+    }
+    // acreage (tolerance 0.5 ac) — compared against GIS_Acres, falling back to Proj_Acres
+    const ed = parseNum(editorial.acreage);
+    const shpField = p.GIS_Acres != null && p.GIS_Acres !== '' ? 'GIS_Acres' : 'Proj_Acres';
+    const shp = parseNum(p[shpField]);
+    if (!isNaN(ed) && !isNaN(shp) && Math.abs(ed - shp) > 0.5) {
+      fieldDiffs.push({
+        field: 'acreage',
+        sitesJson: ed,
+        shapefile: `${shp} (${shpField})`,
+        delta: +(shp - ed).toFixed(2),
+      });
+    }
+
+    if (fieldDiffs.length) diffs.push({ site: editorial.name || projId, id: editorial.id || '', fields: fieldDiffs });
+  });
+
+  // A site is an orphan only if NONE of its expanded ids matched any shapefile Project_Nm.
+  const orphanSites = siteList.filter(s => !(s._ids || []).some(id => matchedIds.has(id)));
+
+  if (diffs.length === 0) {
+    console.log('%c[Data check] ✓ sites.json and shapefile agree on all overlapping fields', 'color:#3a9a6d;font-weight:bold;');
+  } else {
+    console.groupCollapsed(`%c[Data check] ${diffs.length} site(s) with sites.json ↔ shapefile discrepancies`,
+      'color:#c46a3a;font-weight:bold;');
+    diffs.forEach(d => {
+      const label = d.id ? `${d.site} (${d.id})` : d.site;
+      console.groupCollapsed(label);
+      d.fields.forEach(fd => {
+        const extra = fd.delta != null ? `  Δ=${fd.delta}` : '';
+        console.log(`  ${fd.field}:  sites.json=%o   shapefile=%o${extra}`, fd.sitesJson, fd.shapefile);
+      });
+      console.groupEnd();
+    });
+    console.groupEnd();
+  }
+
+  if (unmatchedFeatures.length) {
+    console.groupCollapsed(`%c[Data check] ${unmatchedFeatures.length} shapefile feature(s) with no matching sites.json id`,
+      'color:#c46a3a;');
+    unmatchedFeatures.forEach(u => console.log(`  Project_Nm="${u.projId}"  CWC_NAME="${u.name}"`));
+    console.groupEnd();
+  }
+  if (orphanSites.length) {
+    console.groupCollapsed(`%c[Data check] ${orphanSites.length} sites.json entry(ies) with no matching shapefile Project_Nm`,
+      'color:#c46a3a;');
+    orphanSites.forEach(s => console.log(`  id="${s.id}"  name="${s.name}"`));
+    console.groupEnd();
+  }
+}
+
+// ── LOAD EDITORIAL CONTENT ──
+const contentLoadPromise = fetch('data/sites.json')
+  .then(r => r.json())
+  .then(data => {
+    labeledIds = (data.labeled || []).flatMap(expandIds);
+    data.sites.forEach(s => {
+      const ids = expandIds(s.id);
+      if (!ids.length) { console.warn('[sites.json] site has no parseable id, skipping:', s.name); return; }
+      s._ids = ids;
+      s._key = ids[0];
+      siteList.push(s);
+      ids.forEach(id => {
+        if (siteContent[id] && siteContent[id] !== s) {
+          console.warn(`[sites.json] id "${id}" is claimed by both "${siteContent[id].name}" and "${s.name}"`);
+        }
+        siteContent[id] = s;
+      });
+    });
+  })
+  .catch(err => console.warn('Failed to load sites.json:', err));
+
+// ── LOAD PHOTO MANIFEST ──
+// data/photos.json is an array of filenames in data/Photos for Property Summaries/.
+// Each filename begins with one or more ids (e.g. "CE018 019 Meyer Everhart.JPG",
+// "FAC005 FAC006 FAC007 Rockview.JPG"). Trailing-digit-only tokens inherit the previous prefix.
+const PHOTOS_DIR = 'data/Photos%20for%20Property%20Summaries/';
+const photosById = {};   // UPPERCASED id → [filename, ...]
+
+function leadingIdsFromFilename(name) {
+  const ids = [];
+  let prefix = '';
+  const tokens = name.split(/\s+/);
+  for (const raw of tokens) {
+    const bare = raw.replace(/\.(jpe?g|png|webp|gif)$/i, '');
+    const withPrefix = bare.match(/^([A-Za-z]+)(\d+)$/);
+    if (withPrefix) { prefix = withPrefix[1]; ids.push((prefix + withPrefix[2]).toUpperCase()); continue; }
+    if (/^\d+$/.test(bare) && prefix) { ids.push((prefix + bare).toUpperCase()); continue; }
+    break; // first non-id token ends the id run
+  }
+  return ids;
+}
+
+const photosLoadPromise = fetch('data/photos.json')
+  .then(r => r.ok ? r.json() : [])
+  .then(list => {
+    (list || []).forEach(filename => {
+      const ids = leadingIdsFromFilename(filename);
+      if (!ids.length) return;
+      ids.forEach(id => {
+        (photosById[id] = photosById[id] || []).push(filename);
+      });
+    });
+  })
+  .catch(err => console.warn('Failed to load photos.json:', err));
+
+function photosForSite(site) {
+  const ids = site._ids || (site.id ? expandIds(site.id) : []);
+  const seen = new Set();
+  const out = [];
+  ids.forEach(id => (photosById[id] || []).forEach(f => {
+    if (!seen.has(f)) { seen.add(f); out.push(f); }
+  }));
+  return out;
+}
+
+
+const SUN_COLOR = 'rgb(240, 179, 35)';
+
+function siteColor(site) {
+  const id = (site.id || '').split('_')[0];
+  if (id.startsWith('HQ')) return 'rgb(72, 159, 223)';                           // azure  – headquarters
+  if (id.startsWith('CE') || id.startsWith('Acc')) return 'rgb(72, 159, 223)';  // azure  – easements
+  if (id.startsWith('Fee')) return 'rgb(239, 237, 234)';                          // sand   – owned
+  if (id.startsWith('Fac')) return 'rgb(240, 179, 35)';                          // sun    – facilitated
+  return SUN_COLOR;
+}
+
+function siteOutlineColor(site) {
+  const id = (site.id || '').split('_')[0];
+  if (id.startsWith('Fee')) return '#8431d6';  // owned sites get purple border
+  return siteColor(site);
+}
+
+// Builds a Mapbox GL 'match' expression mapping Project_Nm (uppercased) → site color
+function buildColorExpression() {
+  const entries = [];
+  const seen = new Set();
+  propertiesGeojson.features.forEach(f => {
+    const id = normId(f.properties.Project_Nm);
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    const site = resolveContent(id);
+    entries.push(id, site ? siteColor(site) : SUN_COLOR);
+  });
+  return entries.length ? ['match', ['upcase', ['to-string', ['get', 'Project_Nm']]], ...entries, SUN_COLOR] : SUN_COLOR;
+}
+
+function buildOutlineColorExpression() {
+  const entries = [];
+  const seen = new Set();
+  propertiesGeojson.features.forEach(f => {
+    const id = normId(f.properties.Project_Nm);
+    if (!id || seen.has(id)) return;
+    seen.add(id);
+    const site = resolveContent(id);
+    entries.push(id, site ? siteOutlineColor(site) : SUN_COLOR);
+  });
+  return entries.length ? ['match', ['upcase', ['to-string', ['get', 'Project_Nm']]], ...entries, SUN_COLOR] : SUN_COLOR;
+}
+
+function siteCategory(site) {
+  const id = (site.id || '').split('_')[0];
+  if (id.startsWith('HQ')) return 'Headquarters';
+  if (id.startsWith('CE') || id.startsWith('Acc')) return 'Easement';
+  if (id.startsWith('Fee')) return 'Owned';
+  if (id.startsWith('Fac')) return 'Facilitated';
+  return 'Other';
+}
+
+function featureCentroid(geometry) {
+  const rings = geometry.type === 'Polygon'
+    ? [geometry.coordinates[0]]
+    : geometry.coordinates.map(p => p[0]); // outer ring of each polygon
+  let x = 0, y = 0, n = 0;
+  rings.forEach(ring => ring.forEach(([lng, lat]) => { x += lng; y += lat; n++; }));
+  return n > 0 ? [x / n, y / n] : null;
+}
+
+// ── MAP SETUP ──
+mapboxgl.accessToken = 'pk.eyJ1IjoiZGVhbHRoeSIsImEiOiJjbWx4amZyaDUwc3NpM2Zwb2N4bTRoNG04In0.pK9O---Bq9-ZJtG4wAHhwA';
+
+const map = new mapboxgl.Map({
+  container: 'map',
+  style: 'mapbox://styles/dealthy/cmmdy4f6w004u01s92x0b0zgm',
+  center: [-77.92143828422854, 40.81218179517771],
+  zoom: 12,
+  pitch: 65,
+  maxBounds: [
+    [-78.75, 40.15],  // SW corner — west of Blair/Clearfield, south of Huntingdon
+    [-77.10, 41.45]   // NE corner — east of Mifflin, north of Clearfield
+  ]
+});
+
+map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+// ── MAP STYLE TOGGLE ──
+const MAP_STYLES = {
+  vector:    'mapbox://styles/dealthy/cmmdy4f6w004u01s92x0b0zgm',
+  satellite: 'mapbox://styles/dealthy/cmmcaawvh00aa01qn4yc04lin'
+};
+
+let currentStyleKey = 'vector';
+
+function setMapStyle(styleKey, btn) {
+  document.querySelectorAll('.map-style-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentStyleKey = styleKey;
+  map.setStyle(MAP_STYLES[styleKey]);
+  map.once('style.load', addPropertyLayers);
+}
+
+function resetMapView() {
+  map.easeTo({ center: [-77.92143828422854, 40.81218179517771], zoom: 12, pitch: 60, duration: 800 });
+}
+
+// ── MAP + CONTENT LOAD ──
+const mapLoadPromise = new Promise(resolve => map.on('load', resolve));
+const shpLoadPromise = shp('data/PSU_Student_Request.zip').catch(err => {
+  console.warn('Failed to load shapefile:', err);
+  return null;
+});
+
+// Global reference so card clicks can look up centroids
+let propertiesGeojson = null;
+let colorExpr = null;
+let outlineColorExpr = null;
+let hoveredId = null;
+let selectedIds = [];
+
+function featureById(projectId) {
+  if (!propertiesGeojson) return null;
+  const k = normId(projectId);
+  if (!k) return null;
+  return propertiesGeojson.features.find(f => normId(f.properties.Project_Nm) === k) || null;
+}
+
+function centroidById(projectId) {
+  const feature = featureById(projectId);
+  return feature ? featureCentroid(feature.geometry) : null;
+}
+
+function addPropertyLayers() {
+  if (!propertiesGeojson) return;
+
+  if (!map.getSource('properties')) {
+    map.addSource('properties', {
+      type: 'geojson',
+      data: propertiesGeojson,
+      generateId: true
+    });
+  }
+
+  // Fill
+  if (!map.getLayer('properties-fill')) {
+    map.addLayer({
+      id: 'properties-fill',
+      type: 'fill',
+      source: 'properties',
+      paint: { 'fill-color': colorExpr, 'fill-opacity': 0.45 }
+    });
+  }
+
+  // Hover highlight
+  if (!map.getLayer('properties-hover')) {
+    map.addLayer({
+      id: 'properties-hover',
+      type: 'fill',
+      source: 'properties',
+      paint: {
+        'fill-color': '#ffffff',
+        'fill-opacity': ['case', ['boolean', ['feature-state', 'hover'], false], 0.2, 0]
+      }
+    });
+  }
+
+  // Selected highlight
+  if (!map.getLayer('properties-selected')) {
+    map.addLayer({
+      id: 'properties-selected',
+      type: 'fill',
+      source: 'properties',
+      paint: {
+        'fill-color': currentStyleKey === 'satellite' ? '#ffffff' : '#000000',
+        'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.2, 0]
+      }
+    });
+  }
+
+  // Outline
+  if (!map.getLayer('properties-outline')) {
+    map.addLayer({
+      id: 'properties-outline',
+      type: 'line',
+      source: 'properties',
+      paint: {
+        'line-color': ['case', ['boolean', ['feature-state', 'selected'], false], 'rgb(217, 235, 249)', outlineColorExpr],
+        'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3, 1.2],
+        'line-opacity': 0.9
+      }
+    });
+  }
+
+  hoveredId = null;
+}
+
+Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geojson]) => {
+  propertiesGeojson = geojson;
+  reportDataDiscrepancies(geojson);
+  colorExpr = buildColorExpression();
+  outlineColorExpr = buildOutlineColorExpression();
+  addPropertyLayers();
+
+  map.on('mousemove', 'properties-fill', e => {
+    if (e.features.length > 0) {
+      if (hoveredId !== null) map.setFeatureState({ source: 'properties', id: hoveredId }, { hover: false });
+      hoveredId = e.features[0].id;
+      map.setFeatureState({ source: 'properties', id: hoveredId }, { hover: true });
+    }
+    map.getCanvas().style.cursor = 'pointer';
+    const p = e.features[0].properties;
+    const label = p.CWC_NAME || p.Project_Nm;
+    if (label) tooltip.setLngLat(e.lngLat).setText(label).addTo(map);
+  });
+
+  map.on('mouseleave', 'properties-fill', () => {
+    if (hoveredId !== null) map.setFeatureState({ source: 'properties', id: hoveredId }, { hover: false });
+    hoveredId = null;
+    map.getCanvas().style.cursor = '';
+    tooltip.remove();
+  });
+
+  map.on('click', 'properties-fill', e => {
+    const p = e.features[0].properties;
+    const editorial = resolveContent(p.Project_Nm);
+    // Merge editorial with shapefile props: sites.json priority, shapefile fills gaps + new fields
+    const site = mergeSiteWithProps(editorial, p);
+
+    // Clear previous selection
+    selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: false }));
+    selectedIds = [e.features[0].id];
+    map.setFeatureState({ source: 'properties', id: e.features[0].id }, { selected: true });
+
+    openDetail(site);
+    const centroid = featureCentroid(e.features[0].geometry) || [e.lngLat.lng, e.lngLat.lat];
+    showActiveLabel(site.name, centroid);
+    map.easeTo({ center: centroid, duration: 800, zoom: 12.6 });
+  });
+
+  // ── POLYGON LABELS ──
+  permanentLabels.forEach(p => p.remove());
+  permanentLabels = [];
+  labeledIds.forEach(id => {
+    const feature = geojson.features.find(f => normId(f.properties.Project_Nm) === id);
+    if (!feature) { console.warn(`[labels] labeled id "${id}" not found in shapefile Project_Nm`); return; }
+    const c = featureCentroid(feature.geometry);
+    if (!c) return;
+    const editorial = siteContent[id];
+    const label = editorial?.name || feature.properties.CWC_NAME || id;
+
+    const popup = new mapboxgl.Popup({
+      closeButton: false,
+      closeOnClick: false,
+      anchor: 'bottom',
+      className: 'site-label-popup',
+      maxWidth: 'none'
+    })
+      .setLngLat(c)
+      .setText(label)
+      .addTo(map);
+    permanentLabels.push(popup);
+  });
+
+  // ── POINT-ONLY SITES (HQ, etc.) ──
+  siteList.filter(s => s.coordinates && s.clickable === false).forEach(s => {
+    const markerEl = document.createElement('div');
+    markerEl.className = 'hq-marker';
+    const ptMarker = new mapboxgl.Marker({ element: markerEl, anchor: 'center' })
+      .setLngLat(s.coordinates)
+      .addTo(map);
+    permanentLabels.push(ptMarker);  // hides/restores with other labels on site select
+
+    if (labeledIds.includes(normId(s.id))) {
+      const ptPopup = new mapboxgl.Popup({
+        closeButton: false,
+        closeOnClick: false,
+        anchor: 'bottom',
+        className: 'site-label-popup',
+        maxWidth: 'none'
+      })
+        .setLngLat(s.coordinates)
+        .setText(s.name)
+        .addTo(map);
+      permanentLabels.push(ptPopup);  // hides/restores with other labels on site select
+    }
+  });
+
+  renderList();
+});
+
+const tooltip = new mapboxgl.Popup({
+  closeButton: false, closeOnClick: false,
+  offset: [0, -8], className: 'map-tooltip'
+});
+
+let activeLabelMarker = null;
+let permanentLabels = [];
+
+function showActiveLabel(name, lngLat) {
+  if (activeLabelMarker) { activeLabelMarker.remove(); activeLabelMarker = null; }
+  permanentLabels.forEach(p => p.getElement().style.display = 'none');
+  if (!name || !lngLat) return;
+  const el = document.createElement('div');
+  el.className = 'site-active-label';
+  el.textContent = name;
+  activeLabelMarker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+    .setLngLat(lngLat)
+    .addTo(map);
+}
+
+// ── CATEGORIES & LIST ──
+let activeFilter = 'all';
+
+function setFilter(filter, el) {
+  activeFilter = filter;
+  document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  renderList();
+}
+
+function renderList() {
+  const query = document.getElementById('searchInput').value.toLowerCase();
+  const list = document.getElementById('siteList');
+  const filterRow = document.getElementById('filterRow');
+  list.innerHTML = '';
+
+  const sites = siteList;
+
+  // Rebuild category filter pills
+  const categories = [...new Set(sites.map(s => siteCategory(s)))].sort();
+  [...filterRow.querySelectorAll('[data-filter]:not([data-filter="all"])')].forEach(p => p.remove());
+  categories.forEach(cat => {
+    const pill = document.createElement('button');
+    pill.className = 'filter-pill' + (activeFilter === cat ? ' active' : '');
+    pill.textContent = cat;
+    pill.dataset.filter = cat;
+    pill.onclick = function() { setFilter(cat, this); };
+    filterRow.appendChild(pill);
+  });
+
+  const filtered = sites
+    .filter(s => {
+      const matchFilter = activeFilter === 'all' || siteCategory(s) === activeFilter;
+      const matchSearch = !query ||
+        s.name.toLowerCase().includes(query) ||
+        (s.protection_type || '').toLowerCase().includes(query) ||
+        (s.county || '').toLowerCase().includes(query) ||
+        (s.township || '').toLowerCase().includes(query) ||
+        (s.description || '').toLowerCase().includes(query);
+      return matchFilter && matchSearch;
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  filtered.forEach((site, i) => {
+    const color = siteColor(site);
+    const key = site._key;
+    const isClickable = site.clickable !== false;
+    const card = document.createElement('div');
+    card.className = 'site-card' + (activeSiteName === key ? ' active' : '') + (isClickable ? '' : ' no-click');
+    card.style.animationDelay = `${i * 0.04}s`;
+    card.id = `card-${key.replace(/[\s']/g, '-')}`;
+    if (isClickable) {
+      card.onclick = () => {
+        const projId = normId(site.id);
+        const feature = featureById(projId);
+        openDetail(mergeSiteWithProps(site, feature?.properties));
+        const center = centroidById(projId);
+
+        // Clear previous selection and select all features matching this Project_Nm.
+        // Use array indices (matches Mapbox's generateId assignment) so selection works
+        // even for polygons outside the current viewport.
+        selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: false }));
+        if (map.getSource('properties') && propertiesGeojson) {
+          selectedIds = [];
+          propertiesGeojson.features.forEach((f, idx) => {
+            if (normId(f.properties.Project_Nm) === projId) selectedIds.push(idx);
+          });
+          selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: true }));
+        }
+
+        if (center) {
+          showActiveLabel(site.name, center);
+          map.easeTo({ center, zoom: 12.6, duration: 800 });
+        }
+      };
+    }
+    card.innerHTML = `
+      <div class="site-dot" style="background:${color};color:${color}"></div>
+      <div class="site-card-body">
+        <div class="site-card-type">${site.protection_type || ''}</div>
+        <div class="site-card-name">${site.name}</div>
+        <div class="site-card-desc">${site.description || ''}</div>
+      </div>
+    `;
+    list.appendChild(card);
+  });
+}
+
+function filterSites() { renderList(); }
+
+// ── DETAIL PANEL ──
+let activeSiteName = null;
+
+function openDetail(site) {
+  const badge = document.getElementById('detailBadge');
+  const title = document.getElementById('detailTitle');
+  const body = document.getElementById('detailBody');
+  const heroBg = document.getElementById('detailHeroBg');
+
+  // Highlight card
+  document.querySelectorAll('.site-card').forEach(c => c.classList.remove('active'));
+  const siteKey = site._key || site.sfname || site.name;
+  const cardEl = document.getElementById(`card-${siteKey.replace(/[\s']/g, '-')}`);
+  if (cardEl) { cardEl.classList.add('active'); cardEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }
+
+  activeSiteName = siteKey;
+
+  // Hero
+  const color = siteColor(site);
+  if (heroBg) heroBg.style.background = `radial-gradient(ellipse at 30% 50%, ${color}44, transparent 70%), radial-gradient(ellipse at 70% 80%, ${color}22, transparent 60%)`;
+  badge.textContent = siteCategory(site);
+  badge.style.background = color + '22';
+  badge.style.color = color;
+  badge.style.border = `1px solid ${color}44`;
+  title.textContent = site.name;
+
+  const township = site.township ? `, ${site.township} Twp` : '';
+  const idLabel = site.id ? `<span style="font-size:11px;color:var(--text-muted);margin-left:8px;font-weight:400;">${site.id}</span>` : '';
+
+  body.innerHTML = `
+    <div class="detail-coords">
+      <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
+      ${site.county} County${township}${idLabel}
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Overview</div>
+      <p>${site.description || 'No additional information available for this property.'}</p>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Key Facts</div>
+      <div class="detail-facts">
+        <div class="detail-fact" style="grid-column:1/-1;">
+          <div class="detail-fact-value" style="font-size:13px;font-weight:600;line-height:1.3;">${site.protection_type || 'N/A'}</div>
+          <div class="detail-fact-label">Protection Type</div>
+        </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value" style="font-size:15px;">${site.action || 'N/A'}</div>
+          <div class="detail-fact-label">Action</div>
+        </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value" style="font-size:15px;">${site.county || 'N/A'}</div>
+          <div class="detail-fact-label">County</div>
+        </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value">${site.year || 'N/A'}</div>
+          <div class="detail-fact-label">Year</div>
+        </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value" style="font-size:15px;">${site.access || 'N/A'}</div>
+          <div class="detail-fact-label">Access</div>
+        </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value">${site.acreage != null && site.acreage !== '' && site.acreage !== 'N/A' ? (typeof site.acreage === 'number' ? site.acreage.toFixed(2) : site.acreage) + ' ac' : 'N/A'}</div>
+          <div class="detail-fact-label">Acre</div>
+        </div>
+        <div class="detail-fact">
+          <div class="detail-fact-value" style="font-size:15px;">${site.township || 'N/A'}</div>
+          <div class="detail-fact-label">Township</div>
+        </div>
+        <div class="detail-fact" style="grid-column:1/-1;">
+          <div class="detail-fact-value" style="font-size:15px;">${site.date || 'N/A'}</div>
+          <div class="detail-fact-label">Date</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-section">
+      <div class="detail-section-title">Photo</div>
+      ${renderPhotosHtml(site)}
+    </div>
+  `;
+
+  document.getElementById('sidebar').classList.remove('collapsed');
+  document.getElementById('panelViews').classList.add('show-detail');
+}
+
+function renderPhotosHtml(site) {
+  const files = photosForSite(site);
+  if (!files.length) return '<div class="detail-photos-empty">No photos available for this property.</div>';
+  const tiles = files.map(f => {
+    const url = PHOTOS_DIR + encodeURIComponent(f).replace(/%2F/g, '/');
+    const alt = f.replace(/\.[^.]+$/, '');
+    return `<a class="detail-photo" href="${url}" target="_blank" rel="noopener">
+      <img loading="lazy" src="${url}" alt="${alt.replace(/"/g,'&quot;')}">
+    </a>`;
+  }).join('');
+  return `<div class="detail-photos">${tiles}</div>`;
+}
+
+function closeDetail() {
+  document.getElementById('panelViews').classList.remove('show-detail');
+  document.querySelectorAll('.site-card').forEach(c => c.classList.remove('active'));
+  activeSiteName = null;
+  selectedIds.forEach(id => map.setFeatureState({ source: 'properties', id }, { selected: false }));
+  selectedIds = [];
+  if (activeLabelMarker) { activeLabelMarker.remove(); activeLabelMarker = null; }
+  permanentLabels.forEach(p => p.getElement().style.display = '');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+// On desktop, start with the sidebar open
+if (window.innerWidth > 768) {
+  document.getElementById('sidebar').classList.remove('collapsed');
+}
+
+function showView(view) {
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// Init — sidebar list renders once content files are loaded
+Promise.all([contentLoadPromise, photosLoadPromise]).then(() => {
+  renderList();
+  const sites = siteList.filter(s => s.clickable !== false);
+  document.getElementById('statSites').textContent = sites.length;
+  const counties = new Set(
+    sites.flatMap(s => (s.county || '').split(',').map(c => c.trim()).filter(Boolean))
+  );
+  document.getElementById('statCounties').textContent = counties.size;
+});
+document.getElementById('detailBackBtn').addEventListener('click', closeDetail);
+</script>
+</body>
+</html>
