@@ -452,7 +452,13 @@
     border: 1px solid rgba(68, 0, 91, 1);
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     white-space: nowrap;
-    pointer-events: none;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .hq-label-popup .mapboxgl-popup-content:hover {
+    background: rgba(69, 0, 91, 1);
+    border-color: rgba(180, 120, 220, 1);
+    transform: translateY(-1px);
   }
   .hq-label-popup .mapboxgl-popup-tip {
     border-top-color: rgba(69, 0, 91, 0.8);
@@ -1719,6 +1725,16 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
         .setText(s.name)
         .addTo(map);
       permanentLabels.push(ptPopup);  // hides/restores with other labels on site select
+
+      const ptPopupEl = ptPopup.getElement();
+      if (ptPopupEl) {
+        ptPopupEl.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          openDetail(s);
+          showActiveLabel(s.name, s.coordinates, s);
+          map.easeTo({ center: s.coordinates, duration: 800, zoom: 12.6 });
+        });
+      }
     }
   });
 
