@@ -118,6 +118,31 @@
     transform: translateX(-100%);
   }
 
+  /* ── DESKTOP: sidebar takes a flex slot so the map shrinks ── */
+  @media (min-width: 769px) {
+    .top-bar {
+      background: var(--navy);
+      backdrop-filter: none;
+    }
+
+    .sidebar {
+      position: relative;
+      top: auto;
+      height: 100%;
+      flex-shrink: 0;
+      background: var(--midnight);  /* fully opaque */
+      transition: margin-left 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .sidebar.collapsed {
+      transform: none;
+      margin-left: calc(-100vw / 5);
+    }
+
+    .map-container {
+      min-width: 0;
+    }
+  }
+
   /* ── SIDEBAR MOBILE (bottom sheet) ── */
   @media (max-width: 768px) {
     .sidebar {
@@ -246,6 +271,7 @@
   }
 
   .sidebar-header .stat-row {
+    margin-top: 10px;
     display: flex;
     gap: 24px;
   }
@@ -395,10 +421,16 @@
     letter-spacing: 0.04em;
     padding: 5px 10px;
     border-radius: 5px;
-    border: 1px solid rgba(240, 179, 35, 0.5);
+    border: 2px solid rgba(99, 45, 0, 0.5);
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     white-space: nowrap;
-    pointer-events: none;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+  }
+  .site-label-popup .mapboxgl-popup-content:hover {
+    background: rgba(0, 20, 35, 0.98);
+    border-color: rgba(99, 45, 0, 0.95);
+    transform: translateY(-1px);
   }
   .site-label-popup .mapboxgl-popup-tip {
     border-top-color: rgba(0, 20, 35, 0.88);
@@ -409,7 +441,7 @@
 
   /* HQ label popup — mirrors site-label-popup */
   .hq-label-popup .mapboxgl-popup-content {
-    background: rgba(0, 20, 35, 0.88);
+    background: rgba(69, 0, 91, 0.8);
     color: var(--text-primary);
     font-family: var(--fonthg);
     font-size: 11px;
@@ -417,16 +449,16 @@
     letter-spacing: 0.04em;
     padding: 5px 10px;
     border-radius: 5px;
-    border: 1px solid rgba(240, 179, 35, 0.5);
+    border: 1px solid rgba(68, 0, 91, 1);
     box-shadow: 0 2px 8px rgba(0,0,0,0.4);
     white-space: nowrap;
     pointer-events: none;
   }
   .hq-label-popup .mapboxgl-popup-tip {
-    border-top-color: rgba(0, 20, 35, 0.88);
+    border-top-color: rgba(69, 0, 91, 0.8);
   }
   .hq-label-popup.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip {
-    border-top-color: rgba(0, 20, 35, 0.88);
+    border-top-color: rgba(69, 0, 91, 0.8);
   }
 
   /* Mapbox overrides */
@@ -454,13 +486,41 @@
     transform: translateY(-50px);
   }
 
-  /* Pin Mapbox logo to viewport bottom-right so panels can't cover it */
-  .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl:has(> .mapboxgl-ctrl-logo) {
+  /* Top-left compass: navy border + low-opacity white fill */
+  .mapboxgl-ctrl-top-left .mapboxgl-ctrl-group {
+    background: rgba(255, 255, 255) !important;
+    border: 1px solid var(--midnight) !important;
+  }
+  .mapboxgl-ctrl-top-left .mapboxgl-ctrl-group button {
+    background: transparent !important;
+  }
+  .mapboxgl-ctrl-top-left .mapboxgl-ctrl-group button:hover {
+    background: rgba(255, 255, 255) !important;
+  }
+
+  /* Pin Mapbox attribution (© text) to viewport bottom-right */
+  .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl-attrib {
     position: fixed !important;
-    right: 3px !important;
-    bottom: 37px !important;
+    right: 0 !important;
+    bottom: 0 !important;
     margin: 0 !important;
     z-index: 10000 !important;
+  }
+
+  /* Hide Mapbox's auto-rendered LogoControl — we render our own persistent copy
+     in <body> (#persistentMapboxLogo) so setStyle / control rebuilds can't churn it. */
+  .mapboxgl-ctrl-bottom-right .mapboxgl-ctrl:has(> .mapboxgl-ctrl-logo) {
+    display: none !important;
+  }
+
+  /* Persistent Mapbox logo — last DOM node, very high z-index, immune to control lifecycle */
+  #persistentMapboxLogo {
+    position: fixed;
+    right: 4px;
+    bottom: 27px;
+    z-index: 99;
+    display: block;
+    pointer-events: auto;
   }
 
 
@@ -488,6 +548,7 @@
     font-size: 22px;
     font-weight: 500;
     line-height: 1.2;
+    margin-bottom: 10px;
   }
 
   .detail-body {
@@ -573,6 +634,16 @@
     border: 1px solid var(--border);
     color: var(--text-secondary);
     background: var(--bg-card);
+  }
+
+  .detail-photos-hero {
+    margin: -24px -24px 18px -24px;
+  }
+  .detail-photos-hero .detail-photo {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
   }
 
   .detail-photos {
@@ -925,7 +996,7 @@
     justify-content: center;
     box-shadow: 4px 0 12px rgba(0,0,0,0.3);
     transition: background 0.2s, border-color 0.2s, color 0.2s;
-    z-index: 10;
+    z-index: 100;
   }
 
   .sidebar-tab:hover {
@@ -973,7 +1044,7 @@
         <!-- CATALOG VIEW -->
         <div class="panel-catalog">
           <div class="sidebar-header">
-            <h2>Central Pennsylvania Region</h2>
+            <h3>Central Pennsylvania Region</h3>
             <div class="stat-row">
               <div class="stat">
                 <div class="stat-value" id="statSites">—</div>
@@ -1003,10 +1074,6 @@
               </svg>
               Back to Sites
             </button>
-          </div>
-          <div class="detail-header">
-            <div class="detail-type-badge" id="detailBadge"></div>
-            <div class="detail-title" id="detailTitle"></div>
           </div>
           <div class="detail-body" id="detailBody"></div>
         </div>
@@ -1045,16 +1112,12 @@
         <span class="legend-label">Conservation Easement</span>
       </div>
       <div class="legend-item">
-        <div class="legend-swatch" style="background: rgb(239,237,234); border-color: #8431d6;"></div>
+        <div class="legend-swatch" style="background: #8431d6; border-color: #a965e8;"></div>
         <span class="legend-label">ClearWater Owned</span>
       </div>
       <div class="legend-item">
         <div class="legend-swatch" style="background: rgb(240,179,35);"></div>
         <span class="legend-label">Facilitated</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-swatch" style="background: rgba(0,0,0,0.2); border-color: #ffffff;"></div>
-        <span class="legend-label">Selected</span>
       </div>
 
       <hr class="legend-divider">
@@ -1066,23 +1129,23 @@
       </div>
       <div class="legend-item">
         <div class="legend-swatch" style="background: #7aaa65;"></div>
-        <span class="legend-label">National / State Parks</span>
+        <span class="legend-label">State Parks / Forests</span>
       </div>
 
       <hr class="legend-divider">
 
       <div class="legend-section-label">Basemap</div>
       <div class="legend-item">
-        <div class="legend-swatch" style="background: #24afff;"></div>
+        <div class="legend-swatch" style="background: #008EE0;"></div>
         <span class="legend-label">Water</span>
-      </div>
-      <div class="legend-item">
-        <div class="legend-swatch" style="background: #b1dea6;"></div>
-        <span class="legend-label">Vegetation</span>
       </div>
     </div>
   </div>
 </div>
+
+<!-- Persistent Mapbox wordmark — last DOM node so it always paints on top of everything else.
+     We render our own and hide Mapbox's auto-added LogoControl, so it can't be churned by setStyle / control rebuilds. -->
+<a id="persistentMapboxLogo" class="mapboxgl-ctrl-logo" href="https://www.mapbox.com/" target="_blank" rel="noopener nofollow" aria-label="Mapbox logo"></a>
 
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.18.0/mapbox-gl.js"></script>
 <script src="https://unpkg.com/shpjs@latest/dist/shp.js"></script>
@@ -1338,15 +1401,25 @@ function siteColor(site) {
   const id = (site.id || '').split('_')[0];
   if (id.startsWith('HQ')) return 'rgb(72, 159, 223)';                           // azure  – headquarters
   if (id.startsWith('CE') || id.startsWith('Acc')) return 'rgb(72, 159, 223)';  // azure  – easements
-  if (id.startsWith('Fee')) return 'rgb(239, 237, 234)';                          // sand   – owned
+  if (id.startsWith('Fee')) return '#8431d6';                                    // purple – owned
   if (id.startsWith('Fac')) return 'rgb(240, 179, 35)';                          // sun    – facilitated
   return SUN_COLOR;
 }
 
 function siteOutlineColor(site) {
   const id = (site.id || '').split('_')[0];
-  if (id.startsWith('Fee')) return '#8431d6';  // owned sites get purple border
+  if (id.startsWith('Fee')) return '#a965e8';  // owned sites: lighter purple outline
   return siteColor(site);
+}
+
+// Lighter accent used for the detail-type-badge so all categories pop on dark bg
+function siteBadgeColor(site) {
+  const id = (site.id || '').split('_')[0];
+  if (id.startsWith('HQ')) return '#9bcef0';                            // lighter azure
+  if (id.startsWith('CE') || id.startsWith('Acc')) return '#9bcef0';    // lighter azure
+  if (id.startsWith('Fee')) return '#b07cea';                           // lighter purple
+  if (id.startsWith('Fac')) return '#f5cc6e';                           // lighter sun
+  return '#f5cc6e';
 }
 
 // Builds a Mapbox GL 'match' expression mapping Project_Nm (uppercased) → site color
@@ -1400,10 +1473,11 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiZGVhbHRoeSIsImEiOiJjbWx4amZyaDUwc3NpM2Zwb2N4b
 const map = new mapboxgl.Map({
   container: 'map',
   style: 'mapbox://styles/dealthy/cmmdy4f6w004u01s92x0b0zgm',
-  center: [-77.92143828422854, 40.81218179517771],
+  center: [-77.83160841464995, 40.83112662027142],
   zoom: 12,
   pitch: 65,
   logoPosition: 'bottom-right',
+  attributionControl: false,
   maxBounds: [
     [-78.75, 40.15],  // SW corner — west of Blair/Clearfield, south of Huntingdon
     [-77.10, 41.45]   // NE corner — east of Mifflin, north of Clearfield
@@ -1411,6 +1485,23 @@ const map = new mapboxgl.Map({
 });
 
 map.addControl(new mapboxgl.NavigationControl({ showCompass: false }), 'bottom-right');
+map.addControl(new mapboxgl.NavigationControl({ showZoom: false, showCompass: true, visualizePitch: true }), 'top-left');
+
+// Manage attribution (logo + credits) ourselves so we can force a fresh render
+// after style changes or container resizes.
+let attribCtrl = null;
+function refreshMapboxAttribution() {
+  if (attribCtrl) {
+    try { map.removeControl(attribCtrl); } catch (_) {}
+    attribCtrl = null;
+  }
+  // Defensive: drop any orphaned attribution DOM nodes left over from previous styles.
+  document.querySelectorAll('.mapboxgl-ctrl-attrib').forEach(el => el.remove());
+  attribCtrl = new mapboxgl.AttributionControl({ compact: false });
+  map.addControl(attribCtrl, 'bottom-right');
+}
+refreshMapboxAttribution();
+map.on('style.load', refreshMapboxAttribution);
 
 // ── MAP STYLE TOGGLE ──
 const MAP_STYLES = {
@@ -1429,7 +1520,8 @@ function setMapStyle(styleKey, btn) {
 }
 
 function resetMapView() {
-  map.easeTo({ center: [-77.92143828422854, 40.81218179517771], zoom: 12, pitch: 60, duration: 800 });
+  closeDetail();  // clears selection, removes the active label, and restores the permanent labels
+  map.easeTo({ center: [-77.83160841464995, 40.83112662027142], zoom: 12, pitch: 65, duration: 800 });
 }
 
 // ── MAP + CONTENT LOAD ──
@@ -1499,8 +1591,8 @@ function addPropertyLayers() {
       type: 'fill',
       source: 'properties',
       paint: {
-        'fill-color': currentStyleKey === 'satellite' ? '#ffffff' : '#000000',
-        'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.2, 0]
+        'fill-color': currentStyleKey === 'satellite' ? '#ffffff' : '#ffffff',
+        'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.0, 0]
       }
     });
   }
@@ -1512,7 +1604,7 @@ function addPropertyLayers() {
       type: 'line',
       source: 'properties',
       paint: {
-        'line-color': ['case', ['boolean', ['feature-state', 'selected'], false], 'rgb(217, 235, 249)', outlineColorExpr],
+        'line-color': ['case', ['boolean', ['feature-state', 'selected'], false], '#632D00', outlineColorExpr],
         'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3, 1.2],
         'line-opacity': 0.9
       }
@@ -1561,7 +1653,7 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
 
     openDetail(site);
     const centroid = featureCentroid(e.features[0].geometry) || [e.lngLat.lng, e.lngLat.lat];
-    showActiveLabel(site.name, centroid);
+    showActiveLabel(site.name, centroid, site);
     map.easeTo({ center: centroid, duration: 800, zoom: 12.6 });
   });
 
@@ -1576,28 +1668,45 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
     const editorial = siteContent[id];
     const label = editorial?.name || feature.properties.CWC_NAME || id;
 
+    // Rockenbeck uses the HQ-style purple popup; everything else uses the standard label popup.
+    const isRockenbeck = (editorial?.name || '').toLowerCase() === 'rockenbeck';
+    const popupClass = isRockenbeck ? 'hq-label-popup' : 'site-label-popup';
+
     const popup = new mapboxgl.Popup({
       closeButton: false,
       closeOnClick: false,
       anchor: 'bottom',
-      className: 'site-label-popup',
+      className: popupClass,
       maxWidth: 'none'
     })
       .setLngLat(c)
       .setText(label)
       .addTo(map);
     permanentLabels.push(popup);
+
+    const popupEl = popup.getElement();
+    if (popupEl) {
+      popupEl.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        const site = mergeSiteWithProps(editorial, feature.properties);
+        const projId = normId(feature.properties.Project_Nm);
+        selectedIds.forEach(sid => map.setFeatureState({ source: 'properties', id: sid }, { selected: false }));
+        if (map.getSource('properties') && propertiesGeojson) {
+          selectedIds = [];
+          propertiesGeojson.features.forEach((f, idx) => {
+            if (normId(f.properties.Project_Nm) === projId) selectedIds.push(idx);
+          });
+          selectedIds.forEach(sid => map.setFeatureState({ source: 'properties', id: sid }, { selected: true }));
+        }
+        openDetail(site);
+        showActiveLabel(site.name, c, site);
+        map.easeTo({ center: c, duration: 800, zoom: 12.6 });
+      });
+    }
   });
 
   // ── POINT-ONLY SITES (HQ, etc.) ──
   siteList.filter(s => s.coordinates && s.clickable === false).forEach(s => {
-    const markerEl = document.createElement('div');
-    markerEl.className = 'hq-marker';
-    const ptMarker = new mapboxgl.Marker({ element: markerEl, anchor: 'center' })
-      .setLngLat(s.coordinates)
-      .addTo(map);
-    permanentLabels.push(ptMarker);  // hides/restores with other labels on site select
-
     if (labeledIds.includes(normId(s.id))) {
       const ptPopup = new mapboxgl.Popup({
         closeButton: false,
@@ -1624,15 +1733,24 @@ const tooltip = new mapboxgl.Popup({
 let activeLabelMarker = null;
 let permanentLabels = [];
 
-function showActiveLabel(name, lngLat) {
+function showActiveLabel(name, lngLat, site) {
   if (activeLabelMarker) { activeLabelMarker.remove(); activeLabelMarker = null; }
   permanentLabels.forEach(p => p.getElement().style.display = 'none');
   if (!name || !lngLat) return;
-  const el = document.createElement('div');
-  el.className = 'site-active-label';
-  el.textContent = name;
-  activeLabelMarker = new mapboxgl.Marker({ element: el, anchor: 'bottom' })
+
+  // Rockenbeck uses the HQ-style purple popup; everything else uses the site label popup.
+  const isRockenbeck = site && (site.name || '').toLowerCase() === 'rockenbeck';
+  const className = isRockenbeck ? 'hq-label-popup' : 'site-label-popup';
+
+  activeLabelMarker = new mapboxgl.Popup({
+    closeButton: false,
+    closeOnClick: false,
+    anchor: 'bottom',
+    className,
+    maxWidth: 'none'
+  })
     .setLngLat(lngLat)
+    .setText(name)
     .addTo(map);
 }
 
@@ -1707,7 +1825,7 @@ function renderList() {
         }
 
         if (center) {
-          showActiveLabel(site.name, center);
+          showActiveLabel(site.name, center, site);
           map.easeTo({ center, zoom: 12.6, duration: 800 });
         }
       };
@@ -1730,8 +1848,6 @@ function filterSites() { renderList(); }
 let activeSiteName = null;
 
 function openDetail(site) {
-  const badge = document.getElementById('detailBadge');
-  const title = document.getElementById('detailTitle');
   const body = document.getElementById('detailBody');
   const heroBg = document.getElementById('detailHeroBg');
 
@@ -1746,16 +1862,24 @@ function openDetail(site) {
   // Hero
   const color = siteColor(site);
   if (heroBg) heroBg.style.background = `radial-gradient(ellipse at 30% 50%, ${color}44, transparent 70%), radial-gradient(ellipse at 70% 80%, ${color}22, transparent 60%)`;
-  badge.textContent = siteCategory(site);
-  badge.style.background = color + '22';
-  badge.style.color = color;
-  badge.style.border = `1px solid ${color}44`;
-  title.textContent = site.name;
 
   const township = site.township ? `, ${site.township} Twp` : '';
   const idLabel = site.id ? `<span style="font-size:11px;color:var(--text-muted);margin-left:8px;font-weight:400;">${site.id}</span>` : '';
 
+  const hasPhotos = photosForSite(site).length > 0;
+  const photosBlock = hasPhotos
+    ? `<div class="detail-photos-hero">${renderPhotosHtml(site)}</div>`
+    : '';
+
+  const badgeColor = siteBadgeColor(site);
+  const badgeStyle = `background:${badgeColor}22;color:${badgeColor};border:1px solid ${badgeColor}44;`;
+
   body.innerHTML = `
+    ${photosBlock}
+
+    <div class="detail-type-badge" style="${badgeStyle}">${siteCategory(site)}</div>
+    <div class="detail-title">${site.name}</div>
+
     <div class="detail-coords">
       <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>
       ${site.county} County${township}${idLabel}
@@ -1778,10 +1902,6 @@ function openDetail(site) {
           <div class="detail-fact-label">Action</div>
         </div>
         <div class="detail-fact">
-          <div class="detail-fact-value" style="font-size:15px;">${site.county || 'N/A'}</div>
-          <div class="detail-fact-label">County</div>
-        </div>
-        <div class="detail-fact">
           <div class="detail-fact-value">${site.year || 'N/A'}</div>
           <div class="detail-fact-label">Year</div>
         </div>
@@ -1793,20 +1913,11 @@ function openDetail(site) {
           <div class="detail-fact-value">${site.acreage != null && site.acreage !== '' && site.acreage !== 'N/A' ? (typeof site.acreage === 'number' ? site.acreage.toFixed(2) : site.acreage) + ' ac' : 'N/A'}</div>
           <div class="detail-fact-label">Acre</div>
         </div>
-        <div class="detail-fact">
-          <div class="detail-fact-value" style="font-size:15px;">${site.township || 'N/A'}</div>
-          <div class="detail-fact-label">Township</div>
-        </div>
         <div class="detail-fact" style="grid-column:1/-1;">
           <div class="detail-fact-value" style="font-size:15px;">${site.date || 'N/A'}</div>
           <div class="detail-fact-label">Date</div>
         </div>
       </div>
-    </div>
-
-    <div class="detail-section">
-      <div class="detail-section-title">Photo</div>
-      ${renderPhotosHtml(site)}
     </div>
   `;
 
@@ -1840,6 +1951,18 @@ function closeDetail() {
 function toggleSidebar() {
   document.getElementById('sidebar').classList.toggle('collapsed');
 }
+
+// On desktop, the sidebar is in flex flow; resize the map after the slide finishes.
+document.getElementById('sidebar').addEventListener('transitionend', (e) => {
+  if (e.propertyName !== 'margin-left' || typeof map === 'undefined') return;
+  map.resize();
+  refreshMapboxAttribution();
+});
+
+// Window resize: keep the logo/attribution rendered.
+window.addEventListener('resize', () => {
+  if (typeof refreshMapboxAttribution === 'function') refreshMapboxAttribution();
+});
 
 // On desktop, start with the sidebar open
 if (window.innerWidth > 768) {
