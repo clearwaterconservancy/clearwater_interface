@@ -949,6 +949,10 @@
   }
 
   @media (max-width: 768px) {
+    .map-container {
+      height: calc(100vh - 60px);
+    }
+
     .legend-toggle-btn {
       display: flex;
       align-items: center;
@@ -1221,7 +1225,7 @@ function mergeSiteWithProps(editorial, p) {
   p = p || {};
   const base = editorial || {};
   const shpAcre = p.GIS_Acres != null && p.GIS_Acres !== '' ? p.GIS_Acres
-                : p.Proj_Acres != null && p.Proj_Acres !== '' ? p.Proj_Acres
+                : p.AreaRnd_WN != null && p.AreaRnd_WN !== '' ? p.AreaRnd_WN
                 : null;
   return {
     _key: normId(base.id || p.Project_Nm) || (p.CWC_NAME || 'unknown'),
@@ -1234,6 +1238,7 @@ function mergeSiteWithProps(editorial, p) {
     county: base.county || p.County || 'N/A',
     township: base.township || p.Township || '',
     acreage: base.acreage != null && base.acreage !== '' ? base.acreage : (shpAcre != null ? shpAcre : 'N/A'),
+    agency: (base.agency != null && base.agency !== '') ? base.agency : (p.Agency_Nm || ''),
     action: p.Action || 'N/A',
     access: p.Access || 'N/A',
     date: p.Date || 'N/A',
@@ -1285,9 +1290,9 @@ function reportDataDiscrepancies(geojson) {
         && normTown(editorial.township) !== normTown(p.Township)) {
       fieldDiffs.push({ field: 'township', sitesJson: editorial.township, shapefile: p.Township });
     }
-    // acreage (tolerance 0.5 ac) — compared against GIS_Acres, falling back to Proj_Acres
+    // acreage (tolerance 0.5 ac) — compared against GIS_Acres, falling back to AreaRnd_WN
     const ed = parseNum(editorial.acreage);
-    const shpField = p.GIS_Acres != null && p.GIS_Acres !== '' ? 'GIS_Acres' : 'Proj_Acres';
+    const shpField = p.GIS_Acres != null && p.GIS_Acres !== '' ? 'GIS_Acres' : 'AreaRnd_WN';
     const shp = parseNum(p[shpField]);
     if (!isNaN(ed) && !isNaN(shp) && Math.abs(ed - shp) > 0.5) {
       fieldDiffs.push({
@@ -1532,7 +1537,7 @@ function resetMapView() {
 
 // ── MAP + CONTENT LOAD ──
 const mapLoadPromise = new Promise(resolve => map.on('load', resolve));
-const shpLoadPromise = shp('data/PSU_Student_Request.zip').catch(err => {
+const shpLoadPromise = shp('data/PSU_Student_Request_agcy.zip').catch(err => {
   console.warn('Failed to load shapefile:', err);
   return null;
 });
@@ -1913,6 +1918,10 @@ function openDetail(site) {
           <div class="detail-fact-value" style="font-size:13px;font-weight:600;line-height:1.3;">${site.protection_type || 'N/A'}</div>
           <div class="detail-fact-label">Protection Type</div>
         </div>
+        ${site.agency ? `<div class="detail-fact" style="grid-column:1/-1;">
+          <div class="detail-fact-value" style="font-size:13px;font-weight:600;line-height:1.3;">${site.agency}</div>
+          <div class="detail-fact-label">Property Owner / Facilitator</div>
+        </div>` : ''}
         <div class="detail-fact">
           <div class="detail-fact-value" style="font-size:15px;">${site.action || 'N/A'}</div>
           <div class="detail-fact-label">Action</div>
@@ -1926,7 +1935,7 @@ function openDetail(site) {
           <div class="detail-fact-label">Access</div>
         </div>
         <div class="detail-fact">
-          <div class="detail-fact-value">${site.acreage != null && site.acreage !== '' && site.acreage !== 'N/A' ? (typeof site.acreage === 'number' ? site.acreage.toFixed(2) : site.acreage) + ' ac' : 'N/A'}</div>
+          <div class="detail-fact-value">${site.acreage != null && site.acreage !== '' && site.acreage !== 'N/A' ? (typeof site.acreage === 'number' ? Math.round(site.acreage) : site.acreage) + ' ac' : 'N/A'}</div>
           <div class="detail-fact-label">Acre</div>
         </div>
         <div class="detail-fact" style="grid-column:1/-1;">
