@@ -1119,7 +1119,7 @@
 
       <div class="legend-section-label">CWC Properties</div>
       <div class="legend-item">
-        <div class="legend-swatch" style="background: #AB0019;"></div>
+        <div class="legend-swatch" style="background: #B80021;"></div>
         <span class="legend-label">Conservation Easement</span>
       </div>
       <div class="legend-item">
@@ -1413,7 +1413,7 @@ const SUN_COLOR = 'rgb(240, 179, 35)';
 function siteColor(site) {
   const id = (site.id || '').split('_')[0];
   if (id.startsWith('HQ')) return 'rgb(72, 159, 223)';                           // azure  – headquarters
-  if (id.startsWith('CE') || id.startsWith('Acc')) return '#AB0019';             // crimson – easements
+  if (id.startsWith('CE') || id.startsWith('Acc')) return '#B80021';             // crimson – easements
   if (id.startsWith('Fee')) return '#8431d6';                                    // purple – owned
   if (id.startsWith('Fac')) return 'rgb(240, 179, 35)';                          // sun    – facilitated
   return SUN_COLOR;
@@ -1429,7 +1429,7 @@ function siteOutlineColor(site) {
 function siteBadgeColor(site) {
   const id = (site.id || '').split('_')[0];
   if (id.startsWith('HQ')) return '#9bcef0';                            // lighter azure
-  if (id.startsWith('CE') || id.startsWith('Acc')) return '#FF696B';    // lighter crimson
+  if (id.startsWith('CE') || id.startsWith('Acc')) return '#FF6973';    // lighter crimson
   if (id.startsWith('Fee')) return '#b07cea';                           // lighter purple
   if (id.startsWith('Fac')) return '#f5cc6e';                           // lighter sun
   return '#f5cc6e';
