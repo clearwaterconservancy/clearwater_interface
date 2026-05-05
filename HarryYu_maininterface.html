@@ -1682,7 +1682,7 @@ Promise.all([mapLoadPromise, contentLoadPromise, shpLoadPromise]).then(([, , geo
     const label = editorial?.name || feature.properties.CWC_NAME || id;
 
     // Rockenbeck uses the HQ-style purple popup; everything else uses the standard label popup.
-    const isRockenbeck = (editorial?.name || '').toLowerCase() === 'Clearwater Conservancy Headquarter, Rockenbeck';
+    const isRockenbeck = (editorial?.name || '').toLowerCase() === 'clearwater conservancy headquarter, rockenbeck';
     const popupClass = isRockenbeck ? 'hq-label-popup' : 'site-label-popup';
 
     const popup = new mapboxgl.Popup({
